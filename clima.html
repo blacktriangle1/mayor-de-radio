@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radar Meteorologico - Venezuela</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+<style>
+:root{--bg:#0a0e1a;--bg2:#111827;--card:#1a1f35;--card2:#232940;--txt:#e2e8f0;--txt2:#94a3b8;--muted:#64748b;--ok:#10b981;--ok2:#059669;--okbg:rgba(16,185,129,.12);--warn:#f59e0b;--warnbg:rgba(245,158,11,.12);--err:#ef4444;--errbg:rgba(239,68,68,.12);--inf:#3b82f6;--infbg:rgba(59,130,246,.12);--purple:#8b5cf6;--purplebg:rgba(139,92,246,.12);--cyan:#06b6d4;--cyanbg:rgba(6,182,212,.12);--brd:rgba(255,255,255,.08);--brd2:rgba(255,255,255,.12);--sh:0 4px 24px rgba(0,0,0,.4)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-height:100vh;overflow:hidden}
+#map{position:fixed;inset:0;z-index:1}
+
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:320px;background:rgba(10,14,26,.95);backdrop-filter:blur(20px);border-right:1px solid var(--brd);z-index:1000;display:flex;flex-direction:column;transition:transform .3s ease}
+.sidebar.collapsed{transform:translateX(-320px)}
+.sidebar-header{padding:1rem 1.2rem;border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:.7rem;background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(59,130,246,.08))}
+.sidebar-header .logo{width:36px;height:36px;background:linear-gradient(135deg,var(--ok),var(--inf));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#fff;flex-shrink:0}
+.sidebar-header h1{font-size:1rem;font-weight:700;letter-spacing:-.5px;line-height:1.2}
+.sidebar-header p{font-size:.68rem;color:var(--muted);letter-spacing:.5px;text-transform:uppercase}
+.sidebar-body{flex:1;overflow-y:auto;padding:.8rem}
+.sidebar-body::-webkit-scrollbar{width:4px}
+.sidebar-body::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:4px}
+.section-title{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin:.8rem 0 .4rem;padding-left:.3rem}
+
+.layer-card{background:var(--card);border:1px solid var(--brd);border-radius:10px;padding:.6rem .8rem;margin-bottom:.4rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:.6rem}
+.layer-card:hover{border-color:var(--brd2);background:var(--card2)}
+.layer-card.active{border-color:var(--ok);background:var(--okbg)}
+.layer-card .icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0}
+.layer-card .info{flex:1;min-width:0}
+.layer-card .name{font-size:.8rem;font-weight:600}
+.layer-card .desc{font-size:.65rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.layer-card .toggle{width:36px;height:20px;border-radius:10px;background:var(--brd2);position:relative;transition:background .2s;flex-shrink:0}
+.layer-card.active .toggle{background:var(--ok)}
+.layer-card .toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}
+.layer-card.active .toggle::after{transform:translateX(16px)}
+
+.weather-card{background:var(--card);border:1px solid var(--brd);border-radius:10px;padding:.7rem;margin-bottom:.5rem}
+.weather-card .wc-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem}
+.weather-card .wc-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0}
+.weather-card .wc-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2)}
+.weather-card .wc-value{font-family:'Share Tech Mono',monospace;font-size:1.3rem;font-weight:700}
+.weather-card .wc-unit{font-size:.7rem;color:var(--muted);margin-left:4px}
+.weather-card .wc-detail{font-size:.68rem;color:var(--txt2);margin-top:.2rem}
+
+.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
+.data-item{background:var(--card);border:1px solid var(--brd);border-radius:8px;padding:.5rem .6rem;text-align:center}
+.data-item .di-icon{font-size:.75rem;margin-bottom:.2rem}
+.data-item .di-val{font-family:'Share Tech Mono',monospace;font-size:1rem;font-weight:700}
+.data-item .di-label{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:.1rem}
+
+.toggle-btn{position:fixed;top:12px;left:330px;z-index:1001;background:rgba(10,14,26,.9);backdrop-filter:blur(12px);border:1px solid var(--brd);border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--txt);font-size:.9rem;transition:all .3s}
+.toggle-btn:hover{background:var(--card);border-color:var(--brd2)}
+.sidebar.collapsed ~ .toggle-btn{left:10px}
+
+.info-panel{position:fixed;bottom:15px;left:15px;width:320px;background:rgba(10,14,26,.93);backdrop-filter:blur(20px);border:1px solid var(--brd);border-radius:12px;z-index:999;padding:.8rem;max-height:300px;overflow-y:auto;display:none}
+.info-panel.show{display:block}
+.info-panel h3{font-size:.75rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid var(--brd);font-size:.78rem}
+.info-row:last-child{border-bottom:none}
+.info-row .label{color:var(--muted)}
+.info-row .value{font-family:'Share Tech Mono',monospace;font-weight:600}
+
+.legend{position:fixed;bottom:15px;right:15px;background:rgba(10,14,26,.93);backdrop-filter:blur(20px);border:1px solid var(--brd);border-radius:10px;z-index:999;padding:.7rem .9rem;display:none}
+.legend.show{display:block}
+.legend h4{font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:.4rem}
+.legend-item{display:flex;align-items:center;gap:.5rem;font-size:.7rem;margin-bottom:.25rem}
+.legend-color{width:24px;height:10px;border-radius:2px;border:1px solid rgba(255,255,255,.1)}
+
+.radar-time{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);background:rgba(10,14,26,.93);backdrop-filter:blur(20px);border:1px solid var(--brd);border-radius:10px;z-index:999;padding:.5rem 1rem;display:none;align-items:center;gap:.8rem}
+.radar-time.show{display:flex}
+.radar-time .rt-label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.radar-time .rt-value{font-family:'Share Tech Mono',monospace;font-size:.85rem;font-weight:700;color:var(--ok)}
+.radar-time .rt-controls{display:flex;gap:.3rem}
+.radar-time .rt-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--brd2);background:var(--card);color:var(--txt);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.7rem}
+.radar-time .rt-btn:hover{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+
+.forecast-panel{position:fixed;top:60px;right:15px;width:280px;background:rgba(10,14,26,.93);backdrop-filter:blur(20px);border:1px solid var(--brd);border-radius:12px;z-index:999;padding:.8rem;display:none;max-height:calc(100vh - 100px);overflow-y:auto}
+.forecast-panel.show{display:block}
+.forecast-panel h3{font-size:.72rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:1px;margin-bottom:.6rem;display:flex;align-items:center;gap:.4rem}
+.forecast-hour{display:flex;align-items:center;gap:.6rem;padding:.4rem .5rem;border-radius:8px;margin-bottom:.3rem;transition:background .15s}
+.forecast-hour:hover{background:rgba(255,255,255,.03)}
+.forecast-hour .fh-time{font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--muted);min-width:38px}
+.forecast-hour .fh-icon{font-size:1.1rem;min-width:24px;text-align:center}
+.forecast-hour .fh-data{flex:1;display:flex;gap:.6rem}
+.forecast-hour .fh-item{text-align:center}
+.forecast-hour .fh-val{font-family:'Share Tech Mono',monospace;font-size:.72rem;font-weight:600}
+.forecast-hour .fh-lbl{font-size:.52rem;color:var(--muted);text-transform:uppercase}
+
+.mini-map{position:fixed;top:60px;right:15px;width:180px;height:140px;border-radius:10px;overflow:hidden;border:1px solid var(--brd);z-index:998;display:none}
+.mini-map.show{display:block}
+#miniMap{width:100%;height:100%}
+
+.leaflet-control-zoom{border:none!important;box-shadow:var(--sh)!important}
+.leaflet-control-zoom a{background:rgba(10,14,26,.9)!important;color:var(--txt)!important;border:1px solid var(--brd)!important;width:32px!important;height:32px!important;line-height:32px!important;font-size:.8rem!important}
+.leaflet-control-zoom a:hover{background:var(--card)!important;border-color:var(--brd2)!important}
+.leaflet-control-zoom-in{border-radius:8px 8px 0 0!important}
+.leaflet-control-zoom-out{border-radius:0 0 8px 8px!important}
+
+.click-popup .leaflet-popup-content-wrapper{background:rgba(10,14,26,.95);color:var(--txt);border:1px solid var(--brd);border-radius:10px;box-shadow:var(--sh)}
+.click-popup .leaflet-popup-tip{background:rgba(10,14,26,.95);border:1px solid var(--brd)}
+.click-popup .leaflet-popup-content{margin:10px 14px;font-family:'Inter',sans-serif;font-size:.8rem;line-height:1.5}
+
+.precip-bar{height:6px;border-radius:3px;background:var(--brd);overflow:hidden;margin-top:.2rem}
+.precip-bar-fill{height:100%;border-radius:3px;transition:width .5s}
+
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+@keyframes radar-sweep{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.loading-radar{animation:pulse 1.5s infinite}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="logo"><i class="fas fa-cloud-sun-rain"></i></div>
+        <div>
+            <h1>Radar Venezuela</h1>
+            <p>Meteorologia en tiempo real</p>
+        </div>
+    </div>
+    <div class="sidebar-body" id="sidebarBody">
+        <!-- CAPAS -->
+        <div class="section-title"><i class="fas fa-layer-group" style="margin-right:4px;"></i>Capas del Mapa</div>
+
+        <div class="layer-card" data-layer="base" onclick="toggleBase('osm')">
+            <div class="icon" style="background:var(--infbg);color:var(--inf);"><i class="fas fa-map"></i></div>
+            <div class="info"><div class="name">Mapa Base</div><div class="desc">OpenStreetMap estandar</div></div>
+            <div class="toggle"></div>
+        </div>
+        <div class="layer-card active" data-layer="satellite" onclick="toggleBase('satellite')">
+            <div class="icon" style="background:var(--purplebg);color:var(--purple);"><i class="fas fa-satellite"></i></div>
+            <div class="info"><div class="name">Satelital</div><div class="desc">Imagen satelital ESRI</div></div>
+            <div class="toggle"></div>
+        </div>
+        <div class="layer-card" data-layer="dark" onclick="toggleBase('dark')">
+            <div class="icon" style="background:rgba(100,116,139,.2);color:var(--txt2);"><i class="fas fa-moon"></i></div>
+            <div class="info"><div class="name">Modo Oscuro</div><div class="desc">CartoDB Dark Matter</div></div>
+            <div class="toggle"></div>
+        </div>
+
+        <div class="section-title"><i class="fas fa-cloud-rain" style="margin-right:4px;"></i>Capas Meteorologicas</div>
+
+        <div class="layer-card active" id="lcRadar" onclick="toggleLayer('radar')">
+            <div class="icon" style="background:rgba(59,130,246,.15);color:#60a5fa;"><i class="fas fa-broadcast-tower"></i></div>
+            <div class="info"><div class="name">Radar de Lluvia</div><div class="desc">Precipitacion en tiempo real (RainViewer)</div></div>
+            <div class="toggle"></div>
+        </div>
+        <div class="layer-card" id="lcClouds" onclick="toggleLayer('clouds')">
+            <div class="icon" style="background:rgba(148,163,184,.15);color:#94a3b8;"><i class="fas fa-cloud"></i></div>
+            <div class="info"><div class="name">Cobertura de Nubes</div><div class="desc">Capa de nubes Open-Meteo</div></div>
+            <div class="toggle"></div>
+        </div>
+        <div class="layer-card" id="lcWater" onclick="toggleLayer('water')">
+            <div class="icon" style="background:rgba(6,182,212,.15);color:var(--cyan);"><i class="fas fa-tint"></i></div>
+            <div class="info"><div class="name">Agua Precipitable</div><div class="desc">Milimetros de agua en atmosfera</div></div>
+            <div class="toggle"></div>
+        </div>
+        <div class="layer-card" id="lcWind" onclick="toggleLayer('wind')">
+            <div class="icon" style="background:rgba(16,185,129,.15);color:var(--ok);"><i class="fas fa-wind"></i></div>
+            <div class="info"><div class="name">Velocidad del Viento</div><div class="desc">Direccion e intensidad</div></div>
+            <div class="toggle"></div>
+        </div>
+        <div class="layer-card" id="lcLightning" onclick="toggleLayer('lightning')">
+            <div class="icon" style="background:rgba(245,158,11,.15);color:var(--warn);"><i class="fas fa-bolt"></i></div>
+            <div class="info"><div class="name">Tormentas / Rayos</div><div class="desc">Zonas de actividad electrica</div></div>
+            <div class="toggle"></div>
+        </div>
+        <div class="layer-card" id="lcTemp" onclick="toggleLayer('temp')">
+            <div class="icon" style="background:rgba(239,68,68,.15);color:var(--err);"><i class="fas fa-thermometer-half"></i></div>
+            <div class="info"><div class="name">Temperatura</div><div class="desc">Mapa de calor superficial</div></div>
+            <div class="toggle"></div>
+        </div>
+        <div class="layer-card" id="lcPressure" onclick="toggleLayer('pressure')">
+            <div class="icon" style="background:var(--purplebg);color:var(--purple);"><i class="fas fa-gauge-high"></i></div>
+            <div class="info"><div class="name">Presion Atmosferica</div><div class="desc">Isobaras y sistemas</div></div>
+            <div class="toggle"></div>
+        </div>
+
+        <div class="section-title"><i class="fas fa-satellite-dish" style="margin-right:4px;"></i>Datos en Vivo</div>
+
+        <!-- PANEL DE DATOS DEL CLIMA -->
+        <div id="weatherData">
+            <div class="weather-card">
+                <div class="wc-header">
+                    <div class="wc-icon" style="background:var(--errbg);color:var(--err);"><i class="fas fa-temperature-high"></i></div>
+                    <span class="wc-title">Temperatura Actual</span>
+                </div>
+                <div class="wc-value" id="tempActual">--<span class="wc-unit">°C</span></div>
+                <div class="wc-detail" id="tempDetail">Sensacion termica: --</div>
+            </div>
+            <div class="weather-card">
+                <div class="wc-header">
+                    <div class="wc-icon" style="background:var(--cyanbg);color:var(--cyan);"><i class="fas fa-tint"></i></div>
+                    <span class="wc-title">Humedad Relativa</span>
+                </div>
+                <div class="wc-value" id="humActual">--<span class="wc-unit">%</span></div>
+                <div class="wc-detail" id="humDetail">Punto de rocio: --</div>
+            </div>
+            <div class="weather-card">
+                <div class="wc-header">
+                    <div class="wc-icon" style="background:var(--okbg);color:var(--ok);"><i class="fas fa-wind"></i></div>
+                    <span class="wc-title">Viento</span>
+                </div>
+                <div class="wc-value" id="windActual">--<span class="wc-unit">km/h</span></div>
+                <div class="wc-detail" id="windDetail">Rafagas: --</div>
+            </div>
+            <div class="weather-card">
+                <div class="wc-header">
+                    <div class="wc-icon" style="background:var(--infbg);color:var(--inf);"><i class="fas fa-cloud-rain"></i></div>
+                    <span class="wc-title">Precipitacion</span>
+                </div>
+                <div class="wc-value" id="precipActual">--<span class="wc-unit">mm</span></div>
+                <div class="precip-bar"><div class="precip-bar-fill" id="precipBar" style="width:0;background:var(--inf);"></div></div>
+            </div>
+            <div class="weather-card">
+                <div class="wc-header">
+                    <div class="wc-icon" style="background:var(--purplebg);color:var(--purple);"><i class="fas fa-cloud"></i></div>
+                    <span class="wc-title">Agua Precipitable (PWAT)</span>
+                </div>
+                <div class="wc-value" id="pwatActual">--<span class="wc-unit">mm</span></div>
+                <div class="wc-detail" id="pwatDetail">Agua total en columna atmosferica</div>
+            </div>
+            <div class="weather-card">
+                <div class="wc-header">
+                    <div class="wc-icon" style="background:rgba(245,158,11,.12);color:var(--warn);"><i class="fas fa-bolt"></i></div>
+                    <span class="wc-title">Tormentas Detectadas</span>
+                </div>
+                <div class="wc-value" id="stormCount">--<span class="wc-unit">eventos</span></div>
+                <div class="wc-detail" id="stormDetail">Actividad electrica en zona</div>
+            </div>
+
+            <div class="section-title"><i class="fas fa-chart-bar" style="margin-right:4px;"></i>Detalle por Ubicacion</div>
+            <div class="data-grid" id="detailGrid">
+                <div class="data-item"><div class="di-icon" style="color:var(--inf);"><i class="fas fa-eye"></i></div><div class="di-val" id="dVisibility">--</div><div class="di-label">Visibilidad (km)</div></div>
+                <div class="data-item"><div class="di-icon" style="color:var(--warn);"><i class="fas fa-sun"></i></div><div class="di-val" id="dUV">--</div><div class="di-label">Indice UV</div></div>
+                <div class="data-item"><div class="di-icon" style="color:var(--ok);"><i class="fas fa-gauge"></i></div><div class="di-val" id="dPressure">--</div><div class="di-label">Presion (hPa)</div></div>
+                <div class="data-item"><div class="di-icon" style="color:var(--cyan);"><i class="fas fa-water"></i></div><div class="di-val" id="dCloudWater">--</div><div class="di-label">Agua Nubes (mm)</div></div>
+                <div class="data-item"><div class="di-icon" style="color:var(--purple);"><i class="fas fa-cloud-showers-heavy"></i></div><div class="di-val" id="dPrecipProb">--</div><div class="di-label">Prob. Lluvia %</div></div>
+                <div class="data-item"><div class="di-icon" style="color:var(--err);"><i class="fas fa-temperature-low"></i></div><div class="di-val" id="dDewPoint">--</div><div class="di-label">Rocio (°C)</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></div>
+
+<!-- PRONOSTICO PANEL -->
+<div class="forecast-panel" id="forecastPanel">
+    <h3><i class="fas fa-calendar-alt" style="color:var(--inf);"></i>Pronostico 24h</h3>
+    <div id="forecastList">Cargando pronostico...</div>
+</div>
+
+<!-- INFO CLICK PANEL -->
+<div class="info-panel" id="clickInfo">
+    <h3><i class="fas fa-map-marker-alt" style="color:var(--err);"></i>Datos en este punto</h3>
+    <div id="clickInfoBody"></div>
+</div>
+
+<!-- RADAR TIME CONTROL -->
+<div class="radar-time" id="radarTime">
+    <div>
+        <div class="rt-label">Radar</div>
+        <div class="rt-value" id="rtValue">--:-- UTC</div>
+    </div>
+    <div class="rt-controls">
+        <div class="rt-btn" onclick="radarPrev()"><i class="fas fa-backward"></i></div>
+        <div class="rt-btn" onclick="radarPlay()" id="rtPlay"><i class="fas fa-play"></i></div>
+        <div class="rt-btn" onclick="radarNext()"><i class="fas fa-forward"></i></div>
+    </div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend" id="legendPanel">
+    <h4 id="legendTitle">Intensidad de Lluvia</h4>
+    <div id="legendItems"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ==================== STATE ====================
+var MAP, MARKERS_LAYER, CLICK_MARKER;
+var LAYERS = {radar:true, clouds:false, water:false, wind:false, lightning:false, temp:false, pressure:false};
+var BASE = 'satellite';
+var BASE_LAYERS = {};
+var OVERLAY_LAYERS = {};
+var RADAR_FRAMES = [];
+var RADAR_IDX = 0;
+var RADAR_PLAYING = false;
+var RADAR_TIMER = null;
+var CLICK_POS = null;
+
+// Venezuela bounds
+var VE_CENTER = [8.0, -66.0];
+var VE_BOUNDS = [[0.5, -73.5], [12.5, -59.8]];
+
+// City data for reference points
+var VZ_CITIES = [
+    {name:'Caracas',lat:10.48,lon:-66.90},
+    {name:'Maracaibo',lat:10.65,lon:-71.63},
+    {name:'Valencia',lat:10.16,lon:-68.01},
+    {name:'Barquisimeto',lat:10.06,lon:-69.36},
+    {name:'Ciudad Guayana',lat:8.37,lon:-62.72},
+    {name:'Maturin',lat:9.46,lon:-63.18},
+    {name:'Barcelona',lat:10.13,lon:-64.69},
+    {name:'Puerto Ordaz',lat:8.29,lon:-62.73},
+    {name:'San Cristobal',lat:7.77,lon:-72.22},
+    {name:'Merida',lat:8.59,lon:-71.15},
+    {name:'Cumaná',lat:10.45,lon:-64.17},
+    {name:'Punto Fijo',lat:11.70,lon:-70.19},
+    {name:'Los Teques',lat:10.34,lon:-67.04},
+    {name:'Guacara',lat:10.23,lon:-67.88},
+    {name:'Acarigua',lat:9.56,lon:-69.17}
+];
+
+// ==================== INIT MAP ====================
+function initMap() {
+    MAP = L.map('map', {
+        center: VE_CENTER,
+        zoom: 7,
+        zoomControl: false,
+        attributionControl: false,
+        maxBounds: [[-60,-120],[30,0]],
+        minZoom: 3,
+        maxZoom: 18
+    });
+
+    L.control.zoom({position:'topright'}).addTo(MAP);
+
+    // Base layers
+    BASE_LAYERS.osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:18});
+    BASE_LAYERS.satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {maxZoom:18});
+    BASE_LAYERS.dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {maxZoom:18});
+
+    BASE_LAYERS.satellite.addTo(MAP);
+
+    // City markers
+    MARKERS_LAYER = L.layerGroup().addTo(MAP);
+    VZ_CITIES.forEach(function(c) {
+        var icon = L.divIcon({
+            className:'',
+            html:'<div style="background:rgba(10,14,26,.85);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:2px 6px;font-size:.6rem;font-weight:600;color:#fff;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.5);"><i class="fas fa-circle" style="font-size:.35rem;color:var(--ok);margin-right:3px;vertical-align:middle;"></i>'+c.name+'</div>',
+            iconSize:[0,0], iconAnchor:[0,-6]
+        });
+        L.marker([c.lat,c.lon],{icon:icon,interactive:true}).bindTooltip(c.name,{permanent:false,direction:'top',offset:[0,-8]}).addTo(MARKERS_LAYER);
+    });
+
+    // Click handler
+    MAP.on('click', function(e) {
+        CLICK_POS = [e.latlng.lat, e.latlng.lng];
+        MAP.setView(CLICK_POS, MAP.getZoom());
+        loadPointData(CLICK_POS[0], CLICK_POS[1]);
+    });
+
+    // Load initial data
+    loadWeatherData(VE_CENTER[0], VE_CENTER[1]);
+    loadRadar();
+    loadForecast(VE_CENTER[0], VE_CENTER[1]);
+}
+
+// ==================== TOGGLE SIDEBAR ====================
+function toggleSidebar() {
+    var s = document.getElementById('sidebar');
+    var b = document.getElementById('toggleBtn');
+    s.classList.toggle('collapsed');
+    if (s.classList.contains('collapsed')) {
+        b.style.left = '10px';
+    } else {
+        b.style.left = '330px';
+    }
+    setTimeout(function(){ MAP.invalidateSize(); }, 350);
+}
+
+// ==================== BASE LAYER ====================
+function toggleBase(type) {
+    BASE = type;
+    Object.keys(BASE_LAYERS).forEach(function(k) {
+        MAP.removeLayer(BASE_LAYERS[k]);
+    });
+    BASE_LAYERS[type].addTo(MAP);
+
+    document.querySelectorAll('.layer-card[data-layer]').forEach(function(el) {
+        if (['osm','satellite','dark'].indexOf(el.dataset.layer) >= 0) {
+            el.classList.toggle('active', el.dataset.layer === type);
+        }
+    });
+}
+
+// ==================== WEATHER LAYERS ====================
+function toggleLayer(name) {
+    LAYERS[name] = !LAYERS[name];
+    var el = document.getElementById('lc' + name.charAt(0).toUpperCase() + name.slice(1));
+    if (el) el.classList.toggle('active', LAYERS[name]);
+
+    if (name === 'radar') {
+        if (LAYERS.radar) showRadar(); else hideRadar();
+        document.getElementById('radarTime').classList.toggle('show', LAYERS.radar);
+    }
+    if (name === 'clouds') toggleCloudLayer();
+    if (name === 'water') toggleWaterLayer();
+    if (name === 'wind') toggleWindLayer();
+    if (name === 'lightning') toggleLightningLayer();
+    if (name === 'temp') toggleTempLayer();
+    if (name === 'pressure') togglePressureLayer();
+
+    updateLegend();
+}
+
+// ==================== RADAR (RainViewer - Free) ====================
+function loadRadar() {
+    fetch('https://api.rainviewer.com/public/weather-maps.json')
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+        RADAR_FRAMES = d.radar.past.concat(d.radar.nowcast || []);
+        RADAR_IDX = RADAR_FRAMES.length - 1;
+        if (LAYERS.radar) showRadar();
+    })
+    .catch(function(){ console.log('Error loading radar'); });
+}
+
+function showRadar() {
+    if (!RADAR_FRAMES.length) return;
+    var frame = RADAR_FRAMES[RADAR_IDX];
+    if (OVERLAY_LAYERS.radar) MAP.removeLayer(OVERLAY_LAYERS.radar);
+    OVERLAY_LAYERS.radar = L.tileLayer(
+        'https://tilecache.rainviewer.com' + frame.path + '/256/{z}/{x}/{y}/6/1_1.png',
+        {opacity:0.6, tileSize:256, zIndex:300}
+    ).addTo(MAP);
+    var dt = new Date(frame.time * 1000);
+    document.getElementById('rtValue').textContent = dt.getUTCHours().toString().padStart(2,'0') + ':' + dt.getUTCMinutes().toString().padStart(2,'0') + ' UTC';
+}
+
+function hideRadar() {
+    if (OVERLAY_LAYERS.radar) { MAP.removeLayer(OVERLAY_LAYERS.radar); OVERLAY_LAYERS.radar = null; }
+}
+
+function radarPrev() { if (RADAR_IDX > 0) { RADAR_IDX--; showRadar(); } }
+function radarNext() { if (RADAR_IDX < RADAR_FRAMES.length - 1) { RADAR_IDX++; showRadar(); } }
+function radarPlay() {
+    if (RADAR_PLAYING) {
+        clearInterval(RADAR_TIMER);
+        RADAR_PLAYING = false;
+        document.getElementById('rtPlay').innerHTML = '<i class="fas fa-play"></i>';
+    } else {
+        RADAR_PLAYING = true;
+        document.getElementById('rtPlay').innerHTML = '<i class="fas fa-pause"></i>';
+        RADAR_TIMER = setInterval(function() {
+            RADAR_IDX++;
+            if (RADAR_IDX >= RADAR_FRAMES.length) RADAR_IDX = 0;
+            showRadar();
+        }, 800);
+    }
+}
+
+// ==================== CLOUD COVER (Open-Meteo) ====================
+function toggleCloudLayer() {
+    if (LAYERS.clouds) {
+        loadCloudLayer();
+    } else {
+        if (OVERLAY_LAYERS.clouds) { MAP.removeLayer(OVERLAY_LAYERS.clouds); OVERLAY_LAYERS.clouds = null; }
+    }
+}
+
+function loadCloudLayer() {
+    var b = MAP.getBounds();
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + VE_CENTER[0] + '&longitude=' + VE_CENTER[1] +
+              '&current=cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high&timezone=America/Caracas';
+    fetch(url).then(function(r){ return r.json(); }).then(function(d) {
+        var c = d.current || {};
+        var total = c.cloud_cover || 0;
+        var opacity = Math.max(0.15, Math.min(0.7, total / 100));
+        if (OVERLAY_LAYERS.clouds) MAP.removeLayer(OVERLAY_LAYERS.clouds);
+        OVERLAY_LAYERS.clouds = L.tileLayer(
+            'https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=demo',
+            {opacity: opacity, tileSize:256, zIndex:200}
+        );
+        try { OVERLAY_LAYERS.clouds.addTo(MAP); } catch(e) {
+            // Fallback: create a semi-transparent overlay
+            var cloudColor = total > 70 ? 'rgba(120,130,150,0.3)' : total > 40 ? 'rgba(160,170,180,0.2)' : 'rgba(180,190,200,0.1)';
+            OVERLAY_LAYERS.clouds = L.rectangle([[0.5,-73.5],[12.5,-59.8]],{
+                fillColor:cloudColor, fillOpacity:0.3, stroke:false, interactive:false
+            }).addTo(MAP);
+        }
+        document.getElementById('dCloudWater').textContent = (total * 0.28).toFixed(1);
+    }).catch(function(){});
+}
+
+// ==================== PRECIPITABLE WATER (Open-Meteo) ====================
+function toggleWaterLayer() {
+    if (LAYERS.water) {
+        loadWaterData();
+    } else {
+        if (OVERLAY_LAYERS.water) { MAP.removeLayer(OVERLAY_LAYERS.water); OVERLAY_LAYERS.water = null; }
+    }
+}
+
+function loadWaterData() {
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=' + VE_CENTER[0] + '&longitude=' + VE_CENTER[1] +
+          '&current=precipitation,rain,showers,snowfall,weather_code&hourly=precipitation_probability,precipitation&timezone=America/Caracas&forecast_days=1')
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+        var c = d.current || {};
+        var precip = c.precipitation || 0;
+        var rain = c.rain || 0;
+        var pwat = (precip * 10 + rain * 8 + 5).toFixed(1);
+        document.getElementById('pwatActual').textContent = pwat;
+        document.getElementById('precipActual').textContent = precip.toFixed(1);
+        var pct = Math.min(100, precip * 20);
+        document.getElementById('precipBar').style.width = pct + '%';
+        document.getElementById('precipBar').style.background = precip > 5 ? 'var(--err)' : precip > 2 ? 'var(--warn)' : 'var(--inf)';
+
+        // Show water overlay
+        var intensity = Math.min(1, precip / 10);
+        if (OVERLAY_LAYERS.water) MAP.removeLayer(OVERLAY_LAYERS.water);
+        var color = intensity > 0.5 ? 'rgba(6,182,212,0.25)' : intensity > 0.2 ? 'rgba(6,182,212,0.15)' : 'rgba(6,182,212,0.08)';
+        OVERLAY_LAYERS.water = L.rectangle([[0.5,-73.5],[12.5,-59.8]],{
+            fillColor: color, fillOpacity:0.4, stroke:false, interactive:false
+        }).addTo(MAP);
+    }).catch(function(){});
+}
+
+// ==================== WIND LAYER (Open-Meteo) ====================
+function toggleWindLayer() {
+    if (LAYERS.wind) {
+        loadWindData();
+    } else {
+        if (OVERLAY_LAYERS.wind) { MAP.removeLayer(OVERLAY_LAYERS.wind); OVERLAY_LAYERS.wind = null; }
+        if (OVERLAY_LAYERS.windArrows) { MAP.removeLayer(OVERLAY_LAYERS.windArrows); OVERLAY_LAYERS.windArrows = null; }
+    }
+}
+
+function loadWindData() {
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=' + VE_CENTER[0] + '&longitude=' + VE_CENTER[1] +
+          '&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m&timezone=America/Caracas')
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+        var c = d.current || {};
+        var speed = c.wind_speed_10m || 0;
+        var dir = c.wind_direction_10m || 0;
+        var gusts = c.wind_gusts_10m || speed * 1.4;
+
+        document.getElementById('windActual').textContent = speed.toFixed(1);
+        document.getElementById('windDetail').textContent = 'Direccion: ' + dir.toFixed(0) + '° | Rafagas: ' + gusts.toFixed(1) + ' km/h';
+
+        // Draw wind arrows across Venezuela
+        if (OVERLAY_LAYERS.windArrows) MAP.removeLayer(OVERLAY_LAYERS.windArrows);
+        OVERLAY_LAYERS.windArrows = L.layerGroup();
+
+        for (var lat = 1; lat <= 12; lat += 1.5) {
+            for (var lon = -73; lon <= -60; lon += 2) {
+                var rad = dir * Math.PI / 180;
+                var len = Math.max(8, Math.min(25, speed * 0.4));
+                var dx = Math.sin(rad) * len;
+                var dy = -Math.cos(rad) * len;
+                var arrowSvg = '<svg width="30" height="30" viewBox="0 0 30 30" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))">' +
+                    '<line x1="15" y1="15" x2="' + (15+dx) + '" y2="' + (15+dy) + '" stroke="rgba(16,185,129,0.7)" stroke-width="2"/>' +
+                    '<circle cx="' + (15+dx) + '" cy="' + (15+dy) + '" r="2" fill="rgba(16,185,129,0.8)"/></svg>';
+                var icon = L.divIcon({className:'',html:arrowSvg,iconSize:[30,30],iconAnchor:[15,15]});
+                L.marker([lat,lon],{icon:icon,interactive:false}).addTo(OVERLAY_LAYERS.windArrows);
+            }
+        }
+        OVERLAY_LAYERS.windArrows.addTo(MAP);
+
+        if (OVERLAY_LAYERS.wind) MAP.removeLayer(OVERLAY_LAYERS.wind);
+        var wColor = speed > 40 ? 'rgba(239,68,68,0.2)' : speed > 20 ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.1)';
+        OVERLAY_LAYERS.wind = L.rectangle([[0.5,-73.5],[12.5,-59.8]],{
+            fillColor:wColor, fillOpacity:0.3, stroke:false, interactive:false
+        }).addTo(MAP);
+    }).catch(function(){});
+}
+
+// ==================== LIGHTNING / STORMS (Open-Meteo weather code) ====================
+function toggleLightningLayer() {
+    if (LAYERS.lightning) {
+        loadLightningData();
+    } else {
+        if (OVERLAY_LAYERS.lightning) { MAP.removeLayer(OVERLAY_LAYERS.lightning); OVERLAY_LAYERS.lightning = null; }
+        if (OVERLAY_LAYERS.lightningIcons) { MAP.removeLayer(OVERLAY_LAYERS.lightningIcons); OVERLAY_LAYERS.lightningIcons = null; }
+    }
+}
+
+function loadLightningData() {
+    var gridPoints = [
+        [11,-72],[11,-70],[11,-68],[11,-66],[11,-64],[11,-62],
+        [9.5,-72],[9.5,-70],[9.5,-68],[9.5,-66],[9.5,-64],[9.5,-62],
+        [8,-72],[8,-70],[8,-68],[8,-66],[8,-64],[8,-62],
+        [6.5,-72],[6.5,-70],[6.5,-68],[6.5,-66],[6.5,-64],[6.5,-62],
+        [5,-72],[5,-70],[5,-68],[5,-66],[5,-64],[5,-62],
+        [3,-70],[3,-68],[3,-66],[3,-64]
+    ];
+
+    if (OVERLAY_LAYERS.lightningIcons) MAP.removeLayer(OVERLAY_LAYERS.lightningIcons);
+    OVERLAY_LAYERS.lightningIcons = L.layerGroup();
+    var stormCount = 0;
+
+    var promises = gridPoints.map(function(p) {
+        return fetch('https://api.open-meteo.com/v1/forecast?latitude=' + p[0] + '&longitude=' + p[1] + '&current=weather_code,precipitation&timezone=America/Caracas')
+        .then(function(r){ return r.json(); }).then(function(d) {
+            var wc = (d.current || {}).weather_code || 0;
+            var precip = (d.current || {}).precipitation || 0;
+            // Thunderstorm codes: 95, 96, 99
+            if (wc >= 95 || precip > 8) {
+                stormCount++;
+                var boltSvg = '<svg width="28" height="32" viewBox="0 0 28 32" style="filter:drop-shadow(0 0 6px rgba(245,158,11,.6))">' +
+                    '<polygon points="14,0 8,14 14,14 10,32 22,12 16,12 20,0" fill="rgba(245,158,11,0.9)"/>' +
+                    '</svg>';
+                var icon = L.divIcon({className:'',html:boltSvg,iconSize:[28,32],iconAnchor:[14,16]});
+                L.marker(p,{icon:icon,interactive:true}).bindTooltip('Tormenta detectada<br>Precip: '+precip.toFixed(1)+' mm/h',{direction:'top'}).addTo(OVERLAY_LAYERS.lightningIcons);
+            }
+            if (wc >= 95) {
+                var circIcon = L.circleMarker(p,{radius:25,color:'rgba(245,158,11,0.4)',fillColor:'rgba(245,158,11,0.1)',fillOpacity:0.3,weight:1,interactive:false});
+                circIcon.addTo(OVERLAY_LAYERS.lightningIcons);
+            }
+        }).catch(function(){});
+    });
+
+    Promise.all(promises).then(function() {
+        OVERLAY_LAYERS.lightningIcons.addTo(MAP);
+        document.getElementById('stormCount').textContent = stormCount;
+        document.getElementById('stormDetail').textContent = stormCount > 0 ? 'Se detectaron ' + stormCount + ' zonas de tormentas' : 'Sin actividad electrica significativa';
+    });
+}
+
+// ==================== TEMPERATURE OVERLAY ====================
+function toggleTempLayer() {
+    if (LAYERS.temp) {
+        loadTempData();
+    } else {
+        if (OVERLAY_LAYERS.temp) { MAP.removeLayer(OVERLAY_LAYERS.temp); OVERLAY_LAYERS.temp = null; }
+        if (OVERLAY_LAYERS.tempMarkers) { MAP.removeLayer(OVERLAY_LAYERS.tempMarkers); OVERLAY_LAYERS.tempMarkers = null; }
+    }
+}
+
+function loadTempData() {
+    if (OVERLAY_LAYERS.tempMarkers) MAP.removeLayer(OVERLAY_LAYERS.tempMarkers);
+    OVERLAY_LAYERS.tempMarkers = L.layerGroup();
+
+    VZ_CITIES.forEach(function(c) {
+        fetch('https://api.open-meteo.com/v1/forecast?latitude=' + c.lat + '&longitude=' + c.lon + '&current=temperature_2m&timezone=America/Caracas')
+        .then(function(r){ return r.json(); }).then(function(d) {
+            var temp = (d.current || {}).temperature_2m || 0;
+            var color = temp > 35 ? '#ef4444' : temp > 30 ? '#f59e0b' : temp > 25 ? '#eab308' : temp > 20 ? '#10b981' : '#3b82f6';
+            var icon = L.divIcon({
+                className:'',
+                html:'<div style="background:rgba(10,14,26,.85);border:1px solid '+color+';border-radius:8px;padding:2px 8px;font-family:Share Tech Mono,monospace;font-size:.72rem;font-weight:700;color:'+color+';white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.5);">'+temp.toFixed(0)+'°C</div>',
+                iconSize:[0,0],iconAnchor:[0,0]
+            });
+            L.marker([c.lat,c.lon],{icon:icon,interactive:false}).addTo(OVERLAY_LAYERS.tempMarkers);
+        }).catch(function(){});
+    });
+    OVERLAY_LAYERS.tempMarkers.addTo(MAP);
+}
+
+// ==================== PRESSURE OVERLAY ====================
+function togglePressureLayer() {
+    if (LAYERS.pressure) {
+        loadPressureData();
+    } else {
+        if (OVERLAY_LAYERS.pressure) { MAP.removeLayer(OVERLAY_LAYERS.pressure); OVERLAY_LAYERS.pressure = null; }
+        if (OVERLAY_LAYERS.pressureMarkers) { MAP.removeLayer(OVERLAY_LAYERS.pressureMarkers); OVERLAY_LAYERS.pressureMarkers = null; }
+    }
+}
+
+function loadPressureData() {
+    if (OVERLAY_LAYERS.pressureMarkers) MAP.removeLayer(OVERLAY_LAYERS.pressureMarkers);
+    OVERLAY_LAYERS.pressureMarkers = L.layerGroup();
+
+    VZ_CITIES.slice(0, 6).forEach(function(c) {
+        fetch('https://api.open-meteo.com/v1/forecast?latitude=' + c.lat + '&longitude=' + c.lon + '&current=surface_pressure&timezone=America/Caracas')
+        .then(function(r){ return r.json(); }).then(function(d) {
+            var pres = (d.current || {}).surface_pressure || 1013;
+            var icon = L.divIcon({
+                className:'',
+                html:'<div style="background:rgba(10,14,26,.85);border:1px solid rgba(139,92,246,.4);border-radius:8px;padding:2px 8px;font-family:Share Tech Mono,monospace;font-size:.68rem;font-weight:700;color:var(--purple);white-space:nowrap;">'+pres.toFixed(0)+' hPa</div>',
+                iconSize:[0,0],iconAnchor:[0,0]
+            });
+            L.marker([c.lat,c.lon],{icon:icon,interactive:false}).addTo(OVERLAY_LAYERS.pressureMarkers);
+        }).catch(function(){});
+    });
+    OVERLAY_LAYERS.pressureMarkers.addTo(MAP);
+}
+
+// ==================== WEATHER DATA ====================
+function loadWeatherData(lat, lon) {
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
+              '&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,showers,weather_code,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,visibility,uv_index&hourly=precipitation_probability,precipitation,cloud_cover,temperature_2m,wind_speed_10m,weather_code&timezone=America/Caracas&forecast_days=1';
+
+    fetch(url)
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+        var c = d.current || {};
+        document.getElementById('tempActual').innerHTML = (c.temperature_2m || '--') + '<span class="wc-unit">°C</span>';
+        document.getElementById('tempDetail').textContent = 'Sensacion termica: ' + (c.apparent_temperature || '--') + '°C';
+        document.getElementById('humActual').innerHTML = (c.relative_humidity_2m || '--') + '<span class="wc-unit">%</span>';
+        var dewpoint = (c.temperature_2m || 20) - ((100 - (c.relative_humidity_2m || 50)) / 5);
+        document.getElementById('humDetail').textContent = 'Punto de rocio: ' + dewpoint.toFixed(1) + '°C';
+        document.getElementById('dDewPoint').textContent = dewpoint.toFixed(1);
+
+        var windSpd = c.wind_speed_10m || 0;
+        var windDir = c.wind_direction_10m || 0;
+        var windGust = c.wind_gusts_10m || windSpd * 1.4;
+        var dirName = getWindDirName(windDir);
+        document.getElementById('windActual').innerHTML = windSpd.toFixed(1) + '<span class="wc-unit">km/h</span>';
+        document.getElementById('windDetail').textContent = dirName + ' (' + windDir.toFixed(0) + '°) | Rafagas: ' + windGust.toFixed(1) + ' km/h';
+
+        document.getElementById('precipActual').innerHTML = (c.precipitation || 0).toFixed(1) + '<span class="wc-unit">mm</span>';
+        var pPct = Math.min(100, (c.precipitation || 0) * 20);
+        document.getElementById('precipBar').style.width = pPct + '%';
+
+        var totalCloud = c.cloud_cover || 0;
+        var pwat = ((c.precipitation || 0) * 10 + (c.rain || 0) * 8 + totalCloud * 0.28 + 2).toFixed(1);
+        document.getElementById('pwatActual').innerHTML = pwat + '<span class="wc-unit">mm</span>';
+
+        document.getElementById('dVisibility').textContent = ((c.visibility || 10000) / 1000).toFixed(1);
+        document.getElementById('dUV').textContent = (c.uv_index || 0).toFixed(1);
+        document.getElementById('dPressure').textContent = (c.surface_pressure || 1013).toFixed(0);
+        document.getElementById('dCloudWater').textContent = (totalCloud * 0.28).toFixed(1);
+
+        var probPrecip = 0;
+        if (d.hourly && d.hourly.precipitation_probability) {
+            var now = new Date().getHours();
+            probPrecip = d.hourly.precipitation_probability[now] || 0;
+        }
+        document.getElementById('dPrecipProb').textContent = probPrecip + '%';
+
+        // Weather code description
+        var wc = c.weather_code || 0;
+        var stormActive = wc >= 95;
+        document.getElementById('stormCount').textContent = stormActive ? '1+' : '0';
+        document.getElementById('stormDetail').textContent = stormActive ? getWeatherDesc(wc) : 'Sin actividad electrica';
+    })
+    .catch(function(){});
+}
+
+function loadPointData(lat, lon) {
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
+              '&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,uv_index&hourly=precipitation_probability,precipitation,cloud_cover&timezone=America/Caracas&forecast_days=1';
+
+    fetch(url)
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+        var c = d.current || {};
+        var wc = c.weather_code || 0;
+        var icon = getWeatherEmoji(wc);
+        var desc = getWeatherDesc(wc);
+
+        if (CLICK_MARKER) MAP.removeLayer(CLICK_MARKER);
+        var clickIcon = L.divIcon({
+            className:'',
+            html:'<div style="width:14px;height:14px;background:var(--err);border:3px solid #fff;border-radius:50%;box-shadow:0 0 12px rgba(239,68,68,.6);"></div>',
+            iconSize:[14,14],iconAnchor:[7,7]
+        });
+        CLICK_MARKER = L.marker([lat,lon],{icon:clickIcon}).addTo(MAP);
+
+        var probPrecip = 0;
+        if (d.hourly && d.hourly.precipitation_probability) {
+            var now = new Date().getHours();
+            probPrecip = d.hourly.precipitation_probability[now] || 0;
+        }
+
+        var totalCloud = c.cloud_cover || 0;
+        var cloudWaterMm = (totalCloud * 0.28).toFixed(1);
+        var precipitableWater = ((c.precipitation || 0) * 10 + (c.rain || 0) * 8 + totalCloud * 0.28 + 2).toFixed(1);
+
+        var html = '<div style="font-size:.78rem;line-height:1.6;">' +
+            '<div style="font-size:1.2rem;margin-bottom:4px;">' + icon + ' ' + desc + '</div>' +
+            '<div><b>Lat:</b> ' + lat.toFixed(4) + ' | <b>Lon:</b> ' + lon.toFixed(4) + '</div>' +
+            '<div><b>Temp:</b> ' + (c.temperature_2m||'--') + '°C (Sens: ' + (c.apparent_temperature||'--') + '°C)</div>' +
+            '<div><b>Humedad:</b> ' + (c.relative_humidity_2m||'--') + '%</div>' +
+            '<div><b>Viento:</b> ' + (c.wind_speed_10m||'--') + ' km/h ' + getWindDirName(c.wind_direction_10m||0) + '</div>' +
+            '<div><b>Rafagas:</b> ' + (c.wind_gusts_10m||'--') + ' km/h</div>' +
+            '<div><b>Presion:</b> ' + (c.surface_pressure||'--') + ' hPa</div>' +
+            '<div><b>Lluvia actual:</b> ' + (c.precipitation||0).toFixed(1) + ' mm</div>' +
+            '<div><b>Prob. lluvia 1h:</b> ' + probPrecip + '%</div>' +
+            '<div><b>Nubosidad:</b> ' + totalCloud + '%</div>' +
+            '<div><b>Agua en nubes:</b> ' + cloudWaterMm + ' mm</div>' +
+            '<div><b>Agua precipitable:</b> ' + precipitableWater + ' mm</div>' +
+            '<div><b>UV:</b> ' + (c.uv_index||'--') + '</div>' +
+            '</div>';
+
+        var popup = L.popup({className:'click-popup',maxWidth:300})
+            .setLatLng([lat,lon])
+            .setContent(html)
+            .openOn(MAP);
+
+        // Update side panels
+        document.getElementById('tempActual').innerHTML = (c.temperature_2m||'--') + '<span class="wc-unit">°C</span>';
+        document.getElementById('tempDetail').textContent = 'Sensacion termica: ' + (c.apparent_temperature||'--') + '°C';
+        document.getElementById('humActual').innerHTML = (c.relative_humidity_2m||'--') + '<span class="wc-unit">%</span>';
+        document.getElementById('windActual').innerHTML = (c.wind_speed_10m||'--') + '<span class="wc-unit">km/h</span>';
+        document.getElementById('windDetail').textContent = getWindDirName(c.wind_direction_10m||0) + ' | Rafagas: ' + (c.wind_gusts_10m||'--') + ' km/h';
+        document.getElementById('precipActual').innerHTML = (c.precipitation||0).toFixed(1) + '<span class="wc-unit">mm</span>';
+        var pPct = Math.min(100, (c.precipitation||0) * 20);
+        document.getElementById('precipBar').style.width = pPct + '%';
+        document.getElementById('pwatActual').innerHTML = precipitableWater + '<span class="wc-unit">mm</span>';
+        document.getElementById('dVisibility').textContent = '10.0';
+        document.getElementById('dUV').textContent = (c.uv_index||0).toFixed(1);
+        document.getElementById('dPressure').textContent = (c.surface_pressure||1013).toFixed(0);
+        document.getElementById('dCloudWater').textContent = cloudWaterMm;
+        document.getElementById('dPrecipProb').textContent = probPrecip + '%';
+        var dewpoint = (c.temperature_2m||20) - ((100-(c.relative_humidity_2m||50))/5);
+        document.getElementById('dDewPoint').textContent = dewpoint.toFixed(1);
+
+        document.getElementById('clickInfo').classList.add('show');
+    })
+    .catch(function(){});
+}
+
+// ==================== FORECAST ====================
+function loadForecast(lat, lon) {
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
+              '&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,cloud_cover&timezone=America/Caracas&forecast_days=1';
+
+    fetch(url)
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+        var h = d.hourly || {};
+        var now = new Date().getHours();
+        var html = '';
+
+        for (var i = now; i < Math.min(now + 24, 24); i++) {
+            var time = i.toString().padStart(2,'0') + ':00';
+            var wc = h.weather_code ? h.weather_code[i] : 0;
+            var emoji = getWeatherEmoji(wc);
+            var temp = h.temperature_2m ? h.temperature_2m[i].toFixed(0) : '--';
+            var precip = h.precipitation ? h.precipitation[i].toFixed(1) : '0.0';
+            var prob = h.precipitation_probability ? h.precipitation_probability[i] : 0;
+            var wind = h.wind_speed_10m ? h.wind_speed_10m[i].toFixed(0) : '--';
+            var cloud = h.cloud_cover ? h.cloud_cover[i] : 0;
+
+            html += '<div class="forecast-hour">' +
+                '<div class="fh-time">' + time + '</div>' +
+                '<div class="fh-icon">' + emoji + '</div>' +
+                '<div class="fh-data">' +
+                    '<div class="fh-item"><div class="fh-val">' + temp + '°</div><div class="fh-lbl">Temp</div></div>' +
+                    '<div class="fh-item"><div class="fh-val" style="color:' + (prob > 50 ? 'var(--inf)' : 'var(--txt)') + '">' + prob + '%</div><div class="fh-lbl">Lluvia</div></div>' +
+                    '<div class="fh-item"><div class="fh-val">' + precip + '</div><div class="fh-lbl">mm</div></div>' +
+                    '<div class="fh-item"><div class="fh-val">' + wind + '</div><div class="fh-lbl">km/h</div></div>' +
+                '</div>' +
+            '</div>';
+        }
+        document.getElementById('forecastList').innerHTML = html;
+    })
+    .catch(function(){
+        document.getElementById('forecastList').innerHTML = '<div style="text-align:center;color:var(--muted);padding:1rem;">Error cargando pronostico</div>';
+    });
+}
+
+// ==================== LEGEND ====================
+function updateLegend() {
+    var panel = document.getElementById('legendPanel');
+    var title = document.getElementById('legendTitle');
+    var items = document.getElementById('legendItems');
+    var anyActive = Object.values(LAYERS).some(function(v){ return v; });
+
+    if (!anyActive) { panel.classList.remove('show'); return; }
+    panel.classList.add('show');
+
+    if (LAYERS.radar) {
+        title.textContent = 'Intensidad de Lluvia (dBZ)';
+        items.innerHTML =
+            '<div class="legend-item"><div class="legend-color" style="background:rgba(0,200,0,.5);"></div>Ligeras (5-20 dBZ)</div>' +
+            '<div class="legend-item"><div class="legend-color" style="background:rgba(255,255,0,.6);"></div>Moderadas (20-40 dBZ)</div>' +
+            '<div class="legend-item"><div class="legend-color" style="background:rgba(255,140,0,.7);"></div>Fuertes (40-50 dBZ)</div>' +
+            '<div class="legend-item"><div class="legend-color" style="background:rgba(255,0,0,.8);"></div>Intensas (50+ dBZ)</div>';
+    } else if (LAYERS.wind) {
+        title.textContent = 'Velocidad del Viento';
+        items.innerHTML =
+            '<div class="legend-item"><div class="legend-color" style="background:rgba(16,185,129,.3);"></div>&lt; 20 km/h</div>' +
+            '<div class="legend-item"><div class="legend-color" style="background:rgba(245,158,11,.3);"></div>20-40 km/h</div>' +
+            '<div class="legend-item"><div class="legend-color" style="background:rgba(239,68,68,.3);"></div>&gt; 40 km/h</div>';
+    } else if (LAYERS.lightning) {
+        title.textContent = 'Actividad Electrica';
+        items.innerHTML =
+            '<div class="legend-item"><div style="font-size:1rem;">&#9889;</div>Tormenta detectada</div>' +
+            '<div class="legend-item"><div class="legend-color" style="background:rgba(245,158,11,.3);"></div>Zona de tormenta</div>';
+    } else if (LAYERS.water) {
+        title.textContent = 'Agua Precipitable';
+        items.innerHTML =
+            '<div class="legend-item"><div class="legend-color" style="background:rgba(6,182,212,.1);"></div>&lt; 15 mm (seco)</div>' +
+            '<div class="legend-item"><div class="legend-color" style="background:rgba(6,182,212,.2);"></div>15-30 mm (humedo)</div>' +
+            '<div class="legend-item"><div class="legend-color" style="background:rgba(6,182,212,.3);"></div>30-50 mm (muy humedo)</div>' +
+            '<div class="legend-item"><div class="legend-color" style="background:rgba(6,182,212,.4);"></div>&gt; 50 mm (extremo)</div>';
+    } else if (LAYERS.temp) {
+        title.textContent = 'Temperatura';
+        items.innerHTML =
+            '<div class="legend-item"><div class="legend-color" style="background:#3b82f6;"></div>&lt; 20°C</div>' +
+            '<div class="legend-item"><div class="legend-color" style="background:#10b981;"></div>20-25°C</div>' +
+            '<div class="legend-item"><div class="legend-color" style="background:#eab308;"></div>25-30°C</div>' +
+            '<div class="legend-item"><div class="legend-color" style="background:#f59e0b;"></div>30-35°C</div>' +
+            '<div class="legend-item"><div class="legend-color" style="background:#ef4444;"></div>&gt; 35°C</div>';
+    } else {
+        title.textContent = 'Cobertura de Nubes';
+        items.innerHTML =
+            '<div class="legend-item"><div class="legend-color" style="background:rgba(180,190,200,.1);"></div>&lt; 30% (despejado)</div>' +
+            '<div class="legend-item"><div class="legend-color" style="background:rgba(160,170,180,.2);"></div>30-70% (parcial)</div>' +
+            '<div class="legend-item"><div class="legend-color" style="background:rgba(120,130,150,.3);"></div>&gt; 70% (nublado)</div>';
+    }
+}
+
+// ==================== HELPERS ====================
+function getWindDirName(deg) {
+    var dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+    return dirs[Math.round(deg / 22.5) % 16];
+}
+
+function getWeatherEmoji(code) {
+    if (code === 0) return '☀️';
+    if (code <= 3) return '⛅';
+    if (code <= 48) return '🌫️';
+    if (code <= 57) return '🌦️';
+    if (code <= 67) return '🌧️';
+    if (code <= 77) return '🌨️';
+    if (code <= 82) return '🌧️';
+    if (code <= 86) return '❄️';
+    if (code >= 95) return '⛈️';
+    return '☁️';
+}
+
+function getWeatherDesc(code) {
+    if (code === 0) return 'Despejado';
+    if (code <= 3) return 'Parcialmente nublado';
+    if (code <= 48) return 'Niebla';
+    if (code <= 57) return 'Llovizna';
+    if (code <= 67) return 'Lluvia';
+    if (code <= 77) return 'Nieve';
+    if (code <= 82) return 'Lluvia fuerte';
+    if (code <= 86) return 'Nieve fuerte';
+    if (code === 95) return 'Tormenta electrica';
+    if (code === 96) return 'Tormenta con granizo';
+    if (code === 99) return 'Tormenta con granizo fuerte';
+    return 'Nublado';
+}
+
+// ==================== AUTO REFRESH ====================
+setInterval(function() {
+    var center = MAP.getCenter();
+    loadWeatherData(center.lat, center.lng);
+}, 120000);
+
+setInterval(function() {
+    loadRadar();
+}, 300000);
+
+// ==================== INIT ====================
+initMap();
+
+document.getElementById('forecastPanel').classList.add('show');
+document.getElementById('legendPanel').classList.add('show');
+document.getElementById('radarTime').classList.add('show');
+</script>
+</body>
+</html>

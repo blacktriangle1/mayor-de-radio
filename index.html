@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Libro de Guardia - Radioaficionados</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+<style>
+:root{--bg:#edf0f5;--card:#fff;--card2:#f3f4f6;--txt:#111827;--txt2:#4b5563;--muted:#9ca3af;--ok:#059669;--ok2:#047857;--okbg:#ecfdf5;--warn:#d97706;--warnbg:#fffbeb;--err:#dc2626;--errbg:#fef2f2;--inf:#2563eb;--infbg:#eff6ff;--brd:#e5e7eb;--brd2:#d1d5db;--sh:0 1px 3px rgba(0,0,0,.07)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(5,150,105,.04)0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(37,99,235,.04)0%,transparent 50%);pointer-events:none;z-index:0}
+nav{background:rgba(255,255,255,.97)!important;backdrop-filter:blur(20px);border-bottom:1px solid var(--brd);padding:.5rem 1.2rem;z-index:1050;box-shadow:var(--sh);position:fixed;top:0;left:0;right:0}
+.nav-brand{font-weight:800;font-size:1.1rem;color:var(--ok)!important;display:flex;align-items:center;gap:.5rem;text-decoration:none}
+.nav-brand i{font-size:1.2rem}
+.cd{background:var(--card);border:1px solid var(--brd);border-radius:12px;overflow:hidden;box-shadow:var(--sh);transition:box-shadow .3s}
+.cd:hover{box-shadow:0 10px 25px rgba(0,0,0,.08)}
+.ch{background:var(--card2);border-bottom:1px solid var(--brd);color:var(--txt);font-weight:600;font-size:.88rem;padding:.7rem 1.2rem;display:flex;align-items:center;justify-content:space-between}
+.ch i{color:var(--ok);margin-right:8px}
+.cb{padding:1.2rem}
+.sc{background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:1.1rem;text-align:center;position:relative;overflow:hidden;box-shadow:var(--sh)}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.sc.g::before{background:var(--ok)}.sc.a::before{background:var(--warn)}.sc.b::before{background:var(--inf)}.sc.r::before{background:var(--err)}
+.sv{font-family:'Share Tech Mono',monospace;font-size:1.9rem;font-weight:700;line-height:1;margin:.4rem 0}
+.sc.g .sv{color:var(--ok)}.sc.a .sv{color:var(--warn)}.sc.b .sv{color:var(--inf)}.sc.r .sv{color:var(--err)}
+.sl{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.fi{background:var(--card)!important;border:1px solid var(--brd2)!important;color:var(--txt)!important;border-radius:8px;padding:.55rem .8rem;font-size:.88rem;transition:border-color .2s,box-shadow .2s;width:100%}
+.fi:focus{border-color:var(--ok)!important;box-shadow:0 0 0 3px rgba(5,150,105,.12)!important;outline:none}
+.fi::placeholder{color:var(--muted)!important}
+.fs{background:var(--card)!important;border:1px solid var(--brd2)!important;color:var(--txt)!important;border-radius:8px;padding:.55rem .8rem;width:100%}
+.fs:focus{border-color:var(--ok)!important;box-shadow:0 0 0 3px rgba(5,150,105,.12)!important}
+.fl{font-size:.78rem;font-weight:600;color:var(--txt2);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.5px}
+.ba{background:var(--ok);color:#fff;font-weight:700;border:none;border-radius:8px;padding:.55rem 1.4rem;font-size:.88rem;transition:all .2s;text-transform:uppercase;letter-spacing:.5px;cursor:pointer}
+.ba:hover{background:var(--ok2);color:#fff;box-shadow:0 4px 15px rgba(5,150,105,.3);transform:translateY(-1px)}
+.bo{background:transparent;color:var(--txt2);border:1px solid var(--brd2);border-radius:8px;padding:.45rem .9rem;font-size:.84rem;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+.bo:hover{border-color:var(--ok);color:var(--ok);background:var(--okbg)}
+.bd{background:var(--errbg);color:var(--err);border:1px solid rgba(220,38,38,.2);border-radius:8px;padding:.45rem .9rem;font-size:.84rem;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.bd:hover{background:var(--err);color:#fff}
+.bw{background:var(--warn);color:#fff;font-weight:700;border:none;border-radius:8px;padding:.5rem 1.1rem;font-size:.84rem;cursor:pointer}
+.binf{background:var(--inf);color:#fff;font-weight:700;border:none;border-radius:8px;padding:.55rem 1.4rem;font-size:.88rem;transition:all .2s;cursor:pointer}
+.binf:hover{background:#1d4ed8;color:#fff;box-shadow:0 4px 15px rgba(37,99,235,.3);transform:translateY(-1px)}
+.td{--bs-table-bg:transparent;--bs-table-color:var(--txt);--bs-table-border-color:var(--brd);font-size:.83rem}
+.td thead th{background:var(--card2);color:var(--txt2);font-size:.73rem;text-transform:uppercase;letter-spacing:.5px;font-weight:600;border-bottom:2px solid var(--brd);padding:.7rem;white-space:nowrap}
+.td tbody td{padding:.6rem .7rem;vertical-align:middle;border-color:var(--brd)}
+.td tbody tr:hover{background:var(--okbg)}
+.td tbody tr{cursor:pointer;transition:background .15s}
+.md{background:var(--card)!important;border:1px solid var(--brd)!important;border-radius:14px!important;color:var(--txt);box-shadow:0 10px 25px rgba(0,0,0,.08)}
+.mh{border-bottom:1px solid var(--brd)!important;padding:.9rem 1.3rem}
+.mh .btn-close{opacity:.5}
+.mf{border-top:1px solid var(--brd)!important;padding:.9rem 1.3rem}
+.tc{position:fixed;top:65px;right:15px;z-index:9999}
+.tt{background:var(--card);border:1px solid var(--brd);color:var(--txt);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:8px;min-width:280px;box-shadow:0 10px 25px rgba(0,0,0,.08);animation:si .3s ease-out;display:flex;align-items:center;gap:10px}
+.tt.ok{border-left:4px solid var(--ok)}.tt.er{border-left:4px solid var(--err)}.tt.in{border-left:4px solid var(--inf)}
+@keyframes si{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.ctag{display:inline-flex;align-items:center;gap:4px;background:var(--okbg);color:var(--ok);border:1px solid rgba(5,150,105,.25);padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:600}
+.page-title{font-size:1.45rem;font-weight:800;margin-bottom:.25rem}
+.page-sub{color:var(--muted);font-size:.88rem;margin-bottom:1.2rem}
+.detail-row{display:flex;padding:.55rem .8rem;border-bottom:1px solid var(--brd);gap:.5rem}
+.detail-row:last-child{border-bottom:none}
+.detail-label{font-size:.73rem;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;min-width:110px}
+.detail-val{font-size:.88rem;color:var(--txt);font-weight:500}
+.empty-state{text-align:center;padding:2rem;color:var(--muted)}
+.empty-state i{font-size:2.5rem;margin-bottom:.8rem;display:block;opacity:.4}
+@media print{body{background:#fff!important}body::before{display:none!important}nav,.tc,.no-print,.cd,.mf,.modal{display:none!important}.print-area{display:block!important;padding:1rem;border:1px solid #ddd;border-radius:8px;margin:1rem 0}.print-area table{width:100%;border-collapse:collapse;font-size:10pt}.print-area th,.print-area td{border:1px solid #ccc;padding:4px 8px;text-align:left}.print-area th{background:#f0f0f0;font-weight:700}.print-header{text-align:center;margin-bottom:1rem}.print-header h2{font-size:14pt;margin:0}.print-header p{font-size:9pt;color:#666;margin:2px 0}}
+.map-panel{position:fixed;bottom:15px;right:15px;width:340px;height:260px;border-radius:12px;overflow:hidden;border:2px solid var(--brd2);box-shadow:0 8px 30px rgba(0,0,0,.15);z-index:1040;background:var(--card);transition:box-shadow .3s}
+.map-panel.no-tr{transition:none!important}
+.map-panel.mini{width:50px;height:50px;border-radius:50%;cursor:pointer;bottom:20px;right:20px}
+.map-panel.mini:hover{box-shadow:0 4px 15px rgba(5,150,105,.3);transform:scale(1.05)}
+.map-panel .map-header{background:var(--card2);border-bottom:1px solid var(--brd);padding:.4rem .7rem;display:flex;align-items:center;justify-content:space-between;font-size:.75rem;font-weight:600;color:var(--txt2)}
+.map-panel .map-header i{color:var(--ok);margin-right:4px}
+.map-panel .map-header button{background:none;border:none;cursor:pointer;color:var(--muted);font-size:.8rem;padding:0 2px}
+.map-panel .map-header button:hover{color:var(--err)}
+#worldMap{height:calc(100% - 32px);width:100%}
+.map-resize{position:absolute;bottom:0;right:0;width:18px;height:18px;cursor:nwse-resize;z-index:10;background:linear-gradient(135deg,transparent 50%,var(--brd2) 50%,var(--brd2) 60%,transparent 60%,transparent 70%,var(--brd2) 70%,var(--brd2) 80%,transparent 80%);border-radius:0 0 10px 0;opacity:.5;transition:opacity .2s}
+.map-resize:hover{opacity:1}
+.map-resize-tl{position:absolute;top:0;left:0;width:18px;height:18px;cursor:nwse-resize;z-index:10;background:linear-gradient(315deg,transparent 50%,var(--brd2) 50%,var(--brd2) 60%,transparent 60%,transparent 70%,var(--brd2) 70%,var(--brd2) 80%,transparent 80%);border-radius:10px 0 0 0;opacity:.5;transition:opacity .2s}
+.map-resize-tl:hover{opacity:1}
+.map-resize-r{position:absolute;top:32px;right:0;width:6px;height:calc(100% - 32px);cursor:ew-resize;z-index:10}
+.map-resize-b{position:absolute;bottom:0;left:0;width:calc(100% - 18px);height:6px;cursor:ns-resize;z-index:10}
+.flag-badge{display:inline-flex;align-items:center;gap:4px;font-size:.88rem}
+.flag-badge .flag-emoji{font-size:1.1rem;line-height:1}
+.flag-badge .flag-name{font-weight:500}
+
+#utcClock #utcTime{transition:text-shadow .3s}
+#utcClock:hover #utcTime{text-shadow:0 0 12px rgba(37,99,235,.4)}
+
+/* PANEL PROPAGACION */
+.prop-panel{position:fixed;bottom:15px;left:15px;width:340px;height:260px;border-radius:12px;overflow:hidden;border:2px solid var(--brd2);box-shadow:0 8px 30px rgba(0,0,0,.15);z-index:1040;background:var(--card);transition:box-shadow .3s}
+.prop-panel.no-tr{transition:none!important}
+.prop-panel.mini{width:50px;height:50px;border-radius:50%;cursor:pointer;bottom:20px;left:20px}
+.prop-panel.mini:hover{box-shadow:0 4px 15px rgba(37,99,235,.3);transform:scale(1.05)}
+.prop-panel .prop-header{background:linear-gradient(135deg,#eff6ff,#dbeafe);border-bottom:1px solid rgba(37,99,235,.2);padding:.4rem .7rem;display:flex;align-items:center;justify-content:space-between;font-size:.75rem;font-weight:600;color:#1e40af}
+.prop-panel .prop-header i{color:var(--inf);margin-right:4px}
+.prop-panel .prop-header button{background:none;border:none;cursor:pointer;color:var(--muted);font-size:.8rem;padding:0 2px}
+.prop-panel .prop-header button:hover{color:var(--err)}
+#propFrame{height:calc(100% - 32px);width:100%;border:none;display:block;background:#fff}
+.prop-resize-br{position:absolute;bottom:0;right:0;width:18px;height:18px;cursor:nwse-resize;z-index:10;background:linear-gradient(135deg,transparent 50%,var(--brd2) 50%,var(--brd2) 60%,transparent 60%,transparent 70%,var(--brd2) 70%,var(--brd2) 80%,transparent 80%);border-radius:0 0 10px 0;opacity:.5;transition:opacity .2s}
+.prop-resize-br:hover{opacity:1}
+.prop-resize-tr{position:absolute;top:0;right:0;width:18px;height:18px;cursor:nesw-resize;z-index:10;background:linear-gradient(45deg,transparent 50%,var(--brd2) 50%,var(--brd2) 60%,transparent 60%,transparent 70%,var(--brd2) 70%,var(--brd2) 80%,transparent 80%);border-radius:0 10px 0 0;opacity:.5;transition:opacity .2s}
+.prop-resize-tr:hover{opacity:1}
+.prop-resize-l{position:absolute;top:32px;left:0;width:6px;height:calc(100% - 32px);cursor:ew-resize;z-index:10}
+.prop-resize-b{position:absolute;bottom:0;left:0;width:calc(100% - 18px);height:6px;cursor:ns-resize;z-index:10}
+
+@media(max-width:768px){.sv{font-size:1.4rem}.page-title{font-size:1.15rem}.map-panel{width:200px;height:160px}.prop-panel{width:200px;height:160px}.cable-panel{width:290px!important;right:10px!important}}
+
+/* PANEL CALCULADORA DE CABLES */
+.cable-panel{position:fixed;top:62px;width:320px;height:auto;max-height:500px;border-radius:12px;overflow:hidden;border:2px solid var(--brd2);box-shadow:0 8px 30px rgba(0,0,0,.18);z-index:1050;background:var(--card);transition:opacity .25s, transform .25s, visibility .25s;opacity:0;visibility:hidden;transform:translateY(-8px)}
+.cable-panel.show{opacity:1;visibility:visible;transform:translateY(0)}
+.cable-panel .cable-header{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-bottom:1px solid rgba(5,150,105,.2);padding:.5rem .8rem;display:flex;align-items:center;justify-content:space-between;font-size:.78rem;font-weight:600;color:#047857}
+.cable-panel .cable-header i{color:var(--ok);margin-right:4px}
+.cable-panel .cable-header button{background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;padding:0 2px}
+.cable-panel .cable-header button:hover{color:var(--err)}
+.cable-panel .cable-body{padding:.7rem .8rem;overflow-y:auto;max-height:420px}
+.cable-fl{font-size:.7rem;font-weight:600;color:var(--txt2);margin-bottom:.2rem;text-transform:uppercase;letter-spacing:.4px}
+.cable-fi{background:var(--card)!important;border:1px solid var(--brd2)!important;color:var(--txt)!important;border-radius:6px;padding:.4rem .6rem;font-size:.8rem;width:100%;transition:border-color .2s}
+.cable-fi:focus{border-color:var(--ok)!important;box-shadow:0 0 0 2px rgba(5,150,105,.1)!important;outline:none}
+.cable-fs{background:var(--card)!important;border:1px solid var(--brd2)!important;color:var(--txt)!important;border-radius:6px;padding:.4rem .6rem;width:100%;font-size:.8rem}
+.cable-fs:focus{border-color:var(--ok)!important;box-shadow:0 0 0 2px rgba(5,150,105,.1)!important}
+.cable-btn{background:var(--ok);color:#fff;font-weight:700;border:none;border-radius:6px;padding:.4rem 1rem;font-size:.78rem;transition:all .2s;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;width:100%}
+.cable-btn:hover{background:var(--ok2);color:#fff;box-shadow:0 3px 10px rgba(5,150,105,.3)}
+.cable-result{background:var(--card2);border:1px solid var(--brd);border-radius:8px;padding:.5rem .7rem;margin-top:.5rem}
+.cable-result-row{display:flex;justify-content:space-between;align-items:center;padding:.25rem 0;border-bottom:1px solid var(--brd);font-size:.78rem}
+.cable-result-row:last-child{border-bottom:none}
+.cable-result-label{color:var(--txt2);font-weight:500}
+.cable-result-val{font-family:'Share Tech Mono',monospace;font-weight:700;color:var(--ok);font-size:.85rem}
+.cable-result-val.bad{color:var(--warn)}
+.cable-result-val.crit{color:var(--err)}
+.cable-sem{display:flex;align-items:center;gap:6px;margin-top:.4rem}
+.cable-sem-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.cable-sem-dot.g{background:var(--ok);box-shadow:0 0 6px rgba(5,150,105,.4)}
+.cable-sem-dot.a{background:var(--warn);box-shadow:0 0 6px rgba(217,119,6,.4)}
+.cable-sem-dot.r{background:var(--err);box-shadow:0 0 6px rgba(220,38,38,.4)}
+.cable-sem-dot.off{background:#d1d5db;opacity:.5}
+.cable-sem-text{font-size:.72rem;color:var(--txt2);font-weight:500}
+</style>
+</head>
+<body>
+
+<div class="tc" id="TC"></div>
+
+<nav>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;">
+        <a class="nav-brand" href="#"><i class="fas fa-broadcast-tower"></i>Libro de Guardia</a>
+        <div id="utcClock" style="font-family:'Share Tech Mono',monospace;font-size:1.35rem;font-weight:700;color:#2563eb;background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(37,99,235,.15));border:1px solid rgba(37,99,235,.25);border-radius:10px;padding:.4rem 1rem;display:flex;align-items:center;gap:8px;box-shadow:0 2px 10px rgba(37,99,235,.12),inset 0 1px 0 rgba(255,255,255,.6);position:relative;overflow:hidden;">
+            <i class="fas fa-clock" style="font-size:.85rem;color:#2563eb;"></i>
+            <span id="utcTime" style="letter-spacing:2px;">--:--:--</span>
+            <span style="font-size:.6rem;color:#2563eb;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;opacity:.8;">UTC</span>
+        </div>
+        <button id="btnCableToggle" onclick="TOGGLE_CABLE()" style="font-family:'Inter',sans-serif;font-size:.85rem;font-weight:700;color:#000;background:linear-gradient(135deg,rgba(134,188,233,.15),rgba(134,188,233,.35));border:1px solid rgba(134,188,233,.5);border-radius:10px;padding:.4rem .9rem;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 10px rgba(134,188,233,.15);transition:all .2s;" onmouseover="this.style.boxShadow='0 4px 15px rgba(134,188,233,.35)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 2px 10px rgba(134,188,233,.15)';this.style.transform='none'">
+            <i class="fas fa-ethernet" style="font-size:.8rem;"></i>Cables
+        </button>
+        <a href="../antenas.php/index.php" target="_blank" style="font-family:'Inter',sans-serif;font-size:.85rem;font-weight:700;color:#000;background:linear-gradient(135deg,rgba(134,188,233,.15),rgba(134,188,233,.35));border:1px solid rgba(134,188,233,.5);border-radius:10px;padding:.4rem .9rem;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 10px rgba(134,188,233,.15);transition:all .2s;text-decoration:none;" onmouseover="this.style.boxShadow='0 4px 15px rgba(134,188,233,.35)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 2px 10px rgba(134,188,233,.15)';this.style.transform='none'">
+            <i class="fas fa-broadcast-tower" style="font-size:.8rem;"></i>Antenas
+        </a>
+        <a href="clima.html" target="_blank" style="font-family:'Inter',sans-serif;font-size:.85rem;font-weight:700;color:#000;background:linear-gradient(135deg,rgba(134,188,233,.15),rgba(134,188,233,.35));border:1px solid rgba(134,188,233,.5);border-radius:10px;padding:.4rem .9rem;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 10px rgba(134,188,233,.15);transition:all .2s;text-decoration:none;" onmouseover="this.style.boxShadow='0 4px 15px rgba(134,188,233,.35)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 2px 10px rgba(134,188,233,.15)';this.style.transform='none'">
+            <i class="fas fa-cloud-sun-rain" style="font-size:.8rem;"></i>Clima
+        </a>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+            <button class="bo" onclick="EXP_CSV()"><i class="fas fa-file-csv" style="margin-right:4px;"></i>CSV</button>
+            <button class="binf" onclick="IMPRI()"><i class="fas fa-print" style="margin-right:6px;"></i>Imprimir</button>
+            <button class="ba" onclick="ABRIR()"><i class="fas fa-plus" style="margin-right:6px;"></i>Nuevo Contacto</button>
+        </div>
+    </div>
+</nav>
+
+<main style="padding-top:70px;padding-bottom:2rem;position:relative;z-index:1;">
+
+<div style="padding:0 1rem;">
+    <h1 class="page-title">Libro de Guardia</h1>
+    <p class="page-sub">Control de contactos de radioaficionados</p>
+
+
+
+    <!-- FILTROS -->
+    <div class="cd" style="margin-bottom:.75rem;">
+        <div class="ch"><span><i class="fas fa-filter"></i>Filtros de busqueda</span><button class="bo" onclick="LIMPIAR()" style="font-size:.75rem;padding:.3rem .6rem;"><i class="fas fa-times"></i> Limpiar</button></div>
+        <div class="cb" style="padding:.8rem 1rem;">
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:end;">
+                <div style="flex:1;min-width:140px;"><label class="fl">Indicativo</label><input type="text" class="fi" id="FI" placeholder="Ej: YV5ABC"></div>
+                <div style="flex:1;min-width:130px;"><label class="fl">Pais</label><input type="text" class="fi" id="FP" placeholder="Ej: Venezuela"></div>
+                <div style="flex:1;min-width:130px;"><label class="fl">Modalidad</label><select class="fs" id="FM"><option value="">Todas</option><option>SSB</option><option>CW</option><option>FT8</option><option>FT4</option><option>RTTY</option><option>FM</option><option>AM</option><option>DMR</option><option>C4FM</option></select></div>
+                <div style="flex:1;min-width:140px;"><label class="fl">Desde</label><input type="date" class="fi" id="FD"></div>
+                <div style="flex:1;min-width:140px;"><label class="fl">Hasta</label><input type="date" class="fi" id="FH"></div>
+                <div><button class="ba" onclick="CARGAR()" style="padding:.45rem 1rem;font-size:.82rem;"><i class="fas fa-search" style="margin-right:4px;"></i>Buscar</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLA -->
+    <div class="cd">
+        <div class="cb" style="padding:0;overflow-x:auto;">
+            <table class="td mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:35px;">#</th>
+                        <th>Indicativo</th>
+                        <th>Nombre</th>
+                        <th>Pais</th>
+                        <th>Hora UTC</th>
+                        <th>Freq (MHz)</th>
+                        <th>Modalidad</th>
+                        <th>Senal</th>
+                        <th>Observacion</th>
+                        <th style="width:120px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="TB">
+                    <tr><td colspan="10" class="empty-state"><i class="fas fa-inbox"></i>Cargando contactos...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</main>
+
+<!-- MAPA MUNDI -->
+<div class="map-panel" id="mapPanel">
+    <div class="map-header">
+        <span><i class="fas fa-globe-americas"></i>Mapa del Contacto</span>
+        <div style="display:flex;gap:4px;align-items:center;">
+            <button onclick="SET_GPS()" title="Ubicacion GPS" style="font-size:.7rem;padding:2px 5px;background:var(--okbg);border:1px solid rgba(5,150,105,.3);border-radius:4px;cursor:pointer;color:var(--ok);font-weight:600;"><i class="fas fa-crosshairs"></i></button>
+            <button onclick="TOGGLE_MAP()" title="Minimizar"><i class="fas fa-minus"></i></button>
+        </div>
+    </div>
+    <div id="worldMap"></div>
+    <div class="map-resize" id="mResizeBR" title="Arrastrar para redimensionar"></div>
+    <div class="map-resize-tl" id="mResizeTL" title="Arrastrar para redimensionar"></div>
+    <div class="map-resize-r" id="mResizeR"></div>
+    <div class="map-resize-b" id="mResizeB"></div>
+</div>
+<div class="map-panel mini" id="mapMini" style="display:none;" onclick="TOGGLE_MAP()">
+    <div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:1.2rem;color:var(--ok);"><i class="fas fa-globe-americas"></i></div>
+</div>
+
+<!-- PANEL PROPAGACION -->
+<div class="prop-panel" id="propPanel">
+    <div class="prop-header">
+        <span><i class="fas fa-satellite-dish"></i>Propagacion HF - Tiempo Real</span>
+        <button onclick="TOGGLE_PROP()" title="Minimizar"><i class="fas fa-minus"></i></button>
+    </div>
+    <iframe id="propFrame" src="https://propagation.dr2w.de/dxprop.php?area=s-america&band=10M&time=20&mode=1" loading="lazy"></iframe>
+    <div class="prop-resize-br" id="pResizeBR" title="Arrastrar para redimensionar"></div>
+    <div class="prop-resize-tr" id="pResizeTR" title="Arrastrar para redimensionar"></div>
+    <div class="prop-resize-l" id="pResizeL"></div>
+    <div class="prop-resize-b" id="pResizeB"></div>
+</div>
+<div class="prop-panel mini" id="propMini" style="display:none;" onclick="TOGGLE_PROP()">
+    <div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:1.2rem;color:var(--inf);"><i class="fas fa-satellite-dish"></i></div>
+</div>
+
+<!-- PANEL CALCULADORA DE CABLES -->
+<div class="cable-panel" id="cablePanel">
+    <div class="cable-header">
+        <span><i class="fas fa-ethernet"></i>Calculadora de Cables</span>
+        <button onclick="TOGGLE_CABLE()" title="Cerrar"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="cable-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.4rem;">
+            <div><label class="cable-fl">Cable</label><select class="cable-fs" id="cbType"></select></div>
+            <div><label class="cable-fl">Banda</label><select class="cable-fs" id="cbBand"></select></div>
+        </div>
+        <div id="cbFreqWrap" style="display:none;margin-bottom:.4rem;">
+            <label class="cable-fl">Frecuencia (MHz)</label>
+            <input type="number" class="cable-fi" id="cbFreq" min="0.1" max="10000" step="0.1" value="146">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.4rem;">
+            <div><label class="cable-fl">Longitud (m)</label><input type="number" class="cable-fi" id="cbLen" min="0.1" max="1000" step="0.1" value="20"></div>
+            <div><label class="cable-fl">Potencia (W)</label><input type="number" class="cable-fi" id="cbPow" min="0.01" max="100000" step="0.1" value="100"></div>
+        </div>
+        <button class="cable-btn" onclick="CALC_CABLE()"><i class="fas fa-calculator" style="margin-right:4px;"></i>Calcular</button>
+        <div id="cbResults" style="display:none;">
+            <div class="cable-sem" id="cbSem">
+                <div class="cable-sem-dot off" id="cbDot1"></div>
+                <div class="cable-sem-dot off" id="cbDot2"></div>
+                <div class="cable-sem-dot off" id="cbDot3"></div>
+                <div class="cable-sem-dot off" id="cbDot4"></div>
+                <span class="cable-sem-text" id="cbSemText">--</span>
+            </div>
+            <div class="cable-result">
+                <div class="cable-result-row"><span class="cable-result-label">Atenuacion</span><span class="cable-result-val" id="cbAtt">--</span></div>
+                <div class="cable-result-row"><span class="cable-result-label">Perdida total</span><span class="cable-result-val" id="cbLoss">--</span></div>
+                <div class="cable-result-row"><span class="cable-result-label">Potencia en antena</span><span class="cable-result-val" id="cbPW">--</span></div>
+                <div class="cable-result-row"><span class="cable-result-label">% perdida</span><span class="cable-result-val" id="cbPct">--</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CREAR/MODIFICAR -->
+<div class="modal fade" id="FMODAL" tabindex="-1" aria-hidden="true">
+<div class="modal-dialog modal-lg"><div class="modal-content md">
+    <div class="mh"><h5 style="font-weight:700;" id="MTITULO"><i class="fas fa-plus-circle" style="color:var(--ok);margin-right:8px;"></i>Nuevo Contacto</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <form id="CFORM">
+        <div style="padding:1rem 1.3rem;">
+            <input type="hidden" id="cID">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem;">
+                <div><label class="fl">Indicativo *</label><input type="text" id="cInd" class="fi" placeholder="Ej: YV5ABC" required style="text-transform:uppercase" maxlength="20"></div>
+                <div><label class="fl">Nombre</label><input type="text" id="cNom" class="fi" placeholder="Nombre del operador" maxlength="100"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem;">
+                <div><label class="fl">Pais</label><input type="text" id="cPai" class="fi" placeholder="Ej: Venezuela" maxlength="60"></div>
+                <div><label class="fl">Hora UTC *</label><input type="datetime-local" id="cHor" class="fi" required></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;margin-bottom:.75rem;">
+                <div><label class="fl">Frecuencia (MHz) *</label><input type="text" id="cFre" class="fi" placeholder="Ej: 14.250" required maxlength="20"></div>
+                <div><label class="fl">Modalidad *</label><select id="cMod" class="fs" required><option value="">Seleccionar...</option><option>SSB</option><option>CW</option><option>FT8</option><option>FT4</option><option>RTTY</option><option>FM</option><option>AM</option><option>DMR</option><option>C4FM</option></select></div>
+                <div><label class="fl">Senal (RX/TX)</label><input type="text" id="cSen" class="fi" placeholder="Ej: 59 / 57" maxlength="20"></div>
+            </div>
+            <div><label class="fl">Observacion</label><textarea id="cObs" class="fi" rows="3" placeholder="QTH, nombre, equipos, notas..." style="resize:vertical;"></textarea></div>
+        </div>
+        <div class="mf">
+            <button type="button" class="bo" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="ba"><i class="fas fa-save" style="margin-right:6px;"></i>Guardar</button>
+        </div>
+    </form>
+</div></div>
+</div>
+
+<!-- MODAL VER DETALLE -->
+<div class="modal fade" id="DDETAIL" tabindex="-1" aria-hidden="true">
+<div class="modal-dialog modal-md"><div class="modal-content md">
+    <div class="mh"><h5 style="font-weight:700;"><i class="fas fa-satellite-dish" style="color:var(--ok);margin-right:8px;"></i>Detalle del Contacto</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div id="DBODY" style="padding:0;"></div>
+    <div class="mf" style="display:flex;gap:.5rem;justify-content:flex-end;">
+        <button class="bo" data-bs-dismiss="modal"><i class="fas fa-times" style="margin-right:4px;"></i>Cerrar</button>
+        <button class="ba" id="DBTN_EDIT" style="font-size:.82rem;"><i class="fas fa-pen" style="margin-right:4px;"></i>Editar</button>
+    </div>
+</div></div>
+</div>
+
+<!-- MODAL CONFIRMAR ELIMINAR -->
+<div class="modal fade" id="DCONFIRM" tabindex="-1" aria-hidden="true">
+<div class="modal-dialog modal-sm"><div class="modal-content md">
+    <div class="mh"><h5 style="font-weight:700;"><i class="fas fa-trash-alt" style="color:var(--err);margin-right:8px;"></i>Eliminar Contacto</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div style="padding:1rem 1.3rem;text-align:center;">
+        <p style="font-size:.9rem;color:var(--txt2);">Seguro que deseas eliminar el contacto con <strong id="DEL_NAME">---</strong>?</p>
+        <p style="font-size:.78rem;color:var(--muted);">Esta accion no se puede deshacer.</p>
+    </div>
+    <div class="mf" style="display:flex;gap:.5rem;justify-content:flex-end;">
+        <button class="bo" data-bs-dismiss="modal">Cancelar</button>
+        <button class="bd" id="DBTN_DEL"><i class="fas fa-trash-alt" style="margin-right:4px;"></i>Eliminar</button>
+    </div>
+</div></div>
+</div>
+
+<!-- MODAL COORDENADAS GPS -->
+<div class="modal fade" id="GPSMODAL" tabindex="-1" aria-hidden="true">
+<div class="modal-dialog modal-sm"><div class="modal-content md">
+    <div class="mh"><h5 style="font-weight:700;"><i class="fas fa-crosshairs" style="color:var(--ok);margin-right:8px;"></i>Ubicacion GPS</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div style="padding:1rem 1.3rem;">
+        <p style="font-size:.78rem;color:var(--muted);margin-bottom:.7rem;">Ingresa tus coordenadas para calcular la distancia a los contactos.</p>
+        <div style="margin-bottom:.6rem;"><label class="fl">Latitud</label><input type="text" class="fi" id="GPS_LAT" placeholder="Ej: 10.4806" inputmode="decimal"></div>
+        <div style="margin-bottom:.6rem;"><label class="fl">Longitud</label><input type="text" class="fi" id="GPS_LON" placeholder="Ej: -66.9036" inputmode="decimal"></div>
+        <div id="GPS_STATUS" style="font-size:.75rem;color:var(--muted);margin-bottom:.5rem;"></div>
+    </div>
+    <div class="mf" style="display:flex;gap:.5rem;justify-content:flex-end;">
+        <button class="bo" data-bs-dismiss="modal">Cancelar</button>
+        <button class="ba" onclick="GUARDAR_GPS()"><i class="fas fa-save" style="margin-right:4px;"></i>Guardar</button>
+    </div>
+</div></div>
+</div>
+
+<!-- IMPRESION -->
+<div class="print-area" style="display:none;" id="PRINTAREA">
+    <div class="print-header">
+        <h2>Libro de Guardia - Radioaficionados</h2>
+        <p>Fecha de impresion: <span id="PDATE"></span> | Total contactos: <span id="PTOTAL"></span></p>
+    </div>
+    <table>
+        <thead><tr><th>#</th><th>Indicativo</th><th>Nombre</th><th>Pais</th><th>Hora UTC</th><th>Freq</th><th>Modo</th><th>Senal</th><th>Observacion</th></tr></thead>
+        <tbody id="PTB"></tbody>
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+var API = 'api.php';
+var ALL = [];
+var MAP = null, MARKER = null, USER_MARKER = null, DIST_LINE = null;
+var MAP_OPEN = true;
+var USER_POS = null;
+
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(p) {
+        USER_POS = [p.coords.latitude, p.coords.longitude];
+        T('Ubicacion GPS activa - ' + p.coords.latitude.toFixed(4) + ', ' + p.coords.longitude.toFixed(4), 'ok');
+    }, function(e) {
+        T('GPS no disponible: activa la ubicacion en tu navegador', 'er');
+    }, {enableHighAccuracy:true, timeout:10000});
+}
+
+function HAVERSINE(lat1, lon1, lat2, lon2) {
+    var R = 6371;
+    var dLat = (lat2 - lat1) * Math.PI / 180;
+    var dLon = (lon2 - lon1) * Math.PI / 180;
+    var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// ==================== GPS / COORDENADAS ====================
+function SET_GPS() {
+    if (USER_POS) {
+        document.getElementById('GPS_LAT').value = USER_POS[0].toFixed(4);
+        document.getElementById('GPS_LON').value = USER_POS[1].toFixed(4);
+        document.getElementById('GPS_STATUS').innerHTML = '<i class="fas fa-check-circle" style="color:var(--ok);margin-right:4px;"></i>Ubicacion GPS activa: ' + USER_POS[0].toFixed(4) + ', ' + USER_POS[1].toFixed(4);
+    } else {
+        document.getElementById('GPS_LAT').value = '';
+        document.getElementById('GPS_LON').value = '';
+        document.getElementById('GPS_STATUS').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:var(--warn);margin-right:4px;"></i>GPS no disponible, ingresa manualmente.';
+    }
+    new bootstrap.Modal(document.getElementById('GPSMODAL')).show();
+}
+
+function GUARDAR_GPS() {
+    var lat = parseFloat(document.getElementById('GPS_LAT').value);
+    var lon = parseFloat(document.getElementById('GPS_LON').value);
+    if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+        T('Coordenadas invalidas', 'er');
+        return;
+    }
+    USER_POS = [lat, lon];
+    T('Ubicacion guardada: ' + lat.toFixed(4) + ', ' + lon.toFixed(4), 'ok');
+    bootstrap.Modal.getInstance(document.getElementById('GPSMODAL')).hide();
+}
+
+// ==================== TOAST ====================
+function T(m, t) {
+    t = t || 'in';
+    var c = document.getElementById('TC');
+    var ic = {ok:'fa-check-circle',er:'fa-exclamation-circle',in:'fa-info-circle'};
+    var co = {ok:'var(--ok)',er:'var(--err)',in:'var(--inf)'};
+    var e = document.createElement('div');
+    e.className = 'tt ' + t;
+    e.innerHTML = '<i class="fas ' + (ic[t]||ic.in) + '" style="color:' + (co[t]||co.in) + ';font-size:1.1rem;flex-shrink:0;"></i><span>' + m + '</span>';
+    c.appendChild(e);
+    setTimeout(function(){ e.style.opacity='0'; e.style.transform='translateX(100%)'; e.style.transition='all .3s'; setTimeout(function(){ e.remove(); },300); },3500);
+}
+
+// ==================== CARGAR CONTACTOS ====================
+function CARGAR() {
+    var p = new URLSearchParams();
+    var fi = document.getElementById('FI').value.trim();
+    var fp = document.getElementById('FP').value.trim();
+    var fm = document.getElementById('FM').value;
+    var fd = document.getElementById('FD').value;
+    var fh = document.getElementById('FH').value;
+    if (fi) p.set('indicativo', fi);
+    if (fp) p.set('pais', fp);
+    if (fm) p.set('modalidad', fm);
+    if (fd) p.set('desde', fd);
+    if (fh) p.set('hasta', fh);
+
+    fetch(API + '?action=list&' + p.toString())
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        ALL = d;
+        REND(d);
+    })
+    .catch(function(){ T('Error al cargar contactos','er'); });
+}
+
+function REND(d) {
+    var tb = document.getElementById('TB');
+    if (!d.length) {
+        tb.innerHTML = '<tr><td colspan="10" class="empty-state"><i class="fas fa-inbox"></i>No se encontraron contactos</td></tr>';
+        return;
+    }
+    var h = '';
+    d.forEach(function(c, i) {
+        var fe = c.hora_utc ? c.hora_utc.replace('T',' ').substring(0,16) : '-';
+        var fl = FLAG(c.pais);
+        h += '<tr onclick="VER('+c.id+')" title="Ver detalle">' +
+            '<td>' + (i+1) + '</td>' +
+            '<td><strong style="color:var(--ok);font-family:Share Tech Mono,monospace;">' + esc(c.indicativo) + '</strong></td>' +
+            '<td>' + esc(c.nombre||'-') + '</td>' +
+            '<td><span class="flag-badge"><span class="flag-emoji">' + fl + '</span><span class="flag-name">' + esc(c.pais||'-') + '</span></span></td>' +
+            '<td style="font-family:Share Tech Mono,monospace;font-size:.8rem;">' + fe + '</td>' +
+            '<td style="font-family:Share Tech Mono,monospace;">' + esc(c.frecuencia) + '</td>' +
+            '<td><span class="ctag" style="background:var(--infbg);color:var(--inf);border-color:rgba(37,99,235,.25);">' + esc(c.modalidad) + '</span></td>' +
+            '<td>' + esc(c.senal||'-') + '</td>' +
+            '<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + esc(c.observacion||'') + '">' + esc(c.observacion||'-') + '</td>' +
+            '<td onclick="event.stopPropagation()">' +
+                '<button class="bo" onclick="EDITAR('+c.id+')" style="padding:.3rem .5rem;font-size:.75rem;margin-right:3px;" title="Editar"><i class="fas fa-pen"></i></button>' +
+                '<button class="bd" onclick="CONFIR('+c.id+',\''+esc(c.indicativo)+'\')" style="padding:.3rem .5rem;font-size:.75rem;" title="Eliminar"><i class="fas fa-trash-alt"></i></button>' +
+            '</td></tr>';
+    });
+    tb.innerHTML = h;
+}
+
+function esc(s) { var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+// ==================== BANDERAS POR PAIS (ISO codes) ====================
+var FLAG_ISO = {
+    'VENEZUELA':'ve','COLOMBIA':'co','BRASIL':'br','ARGENTINA':'ar','CHILE':'cl','PERU':'pe','ECUADOR':'ec','BOLIVIA':'bo','PARAGUAY':'py','URUGUAY':'uy','PANAMA':'pa','CUBA':'cu','MEXICO':'mx','ESTADOS UNIDOS':'us','USA':'us','CANADA':'ca','ESPANA':'es','ESPAÑA':'es','SPAIN':'es','PORTUGAL':'pt','ITALIA':'it','FRANCIA':'fr','ALEMANIA':'de','REINO UNIDO':'gb','UK':'gb','INGLATERRA':'gb','JAPON':'jp','CHINA':'cn','RUSIA':'ru','INDIA':'in','AUSTRALIA':'au','SUDAFRICA':'za','NIGERIA':'ng','MARRUECOS':'ma','TUNEZ':'tn','EGIPTO':'eg','TURQUIA':'tr','ISRAEL':'il','ARABIA SAUDITA':'sa','EMIRATOS':'ae','FILIPINAS':'ph','INDONESIA':'id','TAILANDIA':'th','COSTA RICA':'cr','HONDURAS':'hn','GUATEMALA':'gt','EL SALVADOR':'sv','NICARAGUA':'ni','REPUBLICA DOMINICANA':'do','HAITI':'ht','JAMAICA':'jm','TRINIDAD':'tt','PUERTO RICO':'pr','CURAZAO':'cw','BONAIRE':'bq','ARUBa':'aw','GUYANA':'gy','SURINAME':'sr','GUIANA FRANCESA':'gf','AUSTRIA':'at','SUIZA':'ch','BELGICA':'be','HOLANDA':'nl','PAISES BAJOS':'nl','SUECIA':'se','NORUEGA':'no','DINAMARCA':'dk','FINLANDIA':'fi','POLONIA':'pl','CHEQA':'cz','ESLOVAQUIA':'sk','HUNGRIA':'hu','RUMANIA':'ro','BULGARIA':'bg','GRECIA':'gr','CROACIA':'hr','SERBIA':'rs','ESLOVENIA':'si','IRLANDA':'ie','ISLANDIA':'is','LETONIA':'lv','LITUANIA':'lt','ESTONIA':'ee','UCRANIA':'ua','BIELORRUSIA':'by','IRAN':'ir','IRAQ':'iq','PAKISTAN':'pk','BANGLADESH':'bd','SRILANKA':'lk','NEPAL':'np','MYANMAR':'mm','CAMBOYA':'kh','VIETNAM':'vn','MALASIA':'my','SINGAPUR':'sg','NUEVA ZELANDA':'nz','FIJI':'fj','TONGA':'to','SAMOA':'ws','SINT MAARTEN':'sx','ISLAS CANARIAS':'es'
+};
+function FLAG(nombre) {
+    if (!nombre) return '';
+    var n = nombre.toUpperCase().trim();
+    var iso = FLAG_ISO[n];
+    if (iso) return '<img src="https://flagcdn.com/w40/'+iso+'.png" alt="'+esc(nombre)+'" style="height:16px;vertical-align:middle;border-radius:2px;border:1px solid var(--brd);">';
+    return '<i class="fas fa-flag" style="color:var(--inf);font-size:.7rem;"></i>';
+}
+
+// ==================== COORDENADAS DE PAISES ====================
+var COUNTRIES = {
+    'VENEZUELA':[8,-66],'COLOMBIA':[4,-72],'BRASIL':[-10,-55],'ARGENTINA':[-34,-64],'CHILE':[-33,-71],'PERU':[-10,-76],'ECUADOR':[-2,-78],'BOLIVIA':[-17,-65],'PARAGUAY':[-23,-58],'URUGUAY':[-33,-56],'PANAMA':[9,-80],'CUBA':[22,-80],'MEXICO':[23,-102],'ESTADOS UNIDOS':[38,-97],'USA':[38,-97],'CANADA':[56,-106],'ESPANA':[40,-4],'ESPAÑA':[40,-4],'SPAIN':[40,-4],'PORTUGAL':[39,-8],'ITALIA':[42,13],'FRANCIA':[46,2],'ALEMANIA':[51,9],'REINO UNIDO':[54,-2],'UK':[54,-2],'INGLATERRA':[54,-2],'JAPON':[36,138],'CHINA':[35,105],'RUSIA':[61,105],'INDIA':[20,77],'AUSTRALIA':[-25,134],'SUDAFRICA':[-29,24],'NIGERIA':[10,8],'MARRUECOS':[32,-5],'TUNEZ':[34,9],'EGIPTO':[27,30],'TURQUIA':[39,36],'ISRAEL':[31,35],'ARABIA SAUDITA':[24,45],'EMIRATOS':[24,54],'FILIPINAS':[13,122],'INDONESIA':[-5,120],'TAILANDIA':[14,101],'COSTA RICA':[10,-84],'HONDURAS':[15,-87],'GUATEMALA':[15,-90],'EL SALVADOR':[14,-89],'NICARAGUA':[13,-85],'REPUBLICA DOMINICANA':[19,-70],'HAITI':[19,-72],'JAMAICA':[18,-77],'TRINIDAD':[11,-61],'PUERTO RICO':[18,-66],'CURAZAO':[12,-69],'BONAIRE':[12,-68],'ARUBA':[12,-70],'GUYANA':[7,-59],'SURINAME':[4,-56],'GUIANA FRANCESA':[4,-53],'AUSTRIA':[47,14],'SUIZA':[47,8],'BELGICA':[50,4],'HOLANDA':[52,5],'PAISES BAJOS':[52,5],'SUECIA':[62,15],'NORUEGA':[62,10],'DINAMARCA':[56,10],'FINLANDIA':[64,26],'POLONIA':[52,20],'CHECA':[50,15],'ESLOVAQUIA':[49,19],'HUNGRIA':[47,20],'RUMANIA':[46,25],'BULGARIA':[43,26],'GRECIA':[39,22],'CROACIA':[45,16],'SERBIA':[44,21],'ESLOVENIA':[46,15],'IRLANDA':[53,-8],'ISLANDIA':[65,-18],'LETONIA':[57,25],'LITUANIA':[56,24],'ESTONIA':[59,25],'UCRANIA':[49,32],'BIELORRUSIA':[53,28],'IRAN':[32,53],'IRAQ':[33,44],'PAKISTAN':[30,70],'BANGLADESH':[24,90],'SRILANKA':[7,81],'NEPAL':[28,84],'MYANMAR':[22,98],'CAMBOYA':[13,105],'VIETNAM':[16,108],'MALASIA':[4,101],'SINGAPUR':[1,104],'NUEVA ZELANDA':[-41,174],'FIJI':[-18,175],'TONGA':[-21,-175],'SAMOA':[-13,-172],'SINT MAARTEN':[18,-63],'ISLAS CANARIAS':[28,-16]
+};
+
+// ==================== MAPA ====================
+function INIT_MAP() {
+    MAP = L.map('worldMap', {zoomControl:false, attributionControl:false, scrollWheelZoom:false}).setView([10,-66], 2);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        maxZoom:18
+    }).addTo(MAP);
+    setTimeout(function(){ MAP.invalidateSize(); }, 300);
+}
+
+function MAPA_PAIS(nombre) {
+    if (!MAP || !nombre) return;
+    var n = nombre.toUpperCase().trim();
+    var coords = COUNTRIES[n];
+    if (!coords) return;
+
+    MAP.setView(coords, 4, {animate:true});
+
+    if (MAP_MARKER) MAP.removeLayer(MAP_MARKER);
+    if (DIST_LINE) MAP.removeLayer(DIST_LINE);
+    if (USER_MARKER) MAP.removeLayer(USER_MARKER);
+
+    var iso = FLAG_ISO[n];
+    var flagUrl = iso ? 'https://flagcdn.com/w40/'+iso+'.png' : '';
+    var html = flagUrl
+        ? '<div style="background:var(--card);border:2px solid var(--ok);border-radius:6px;padding:2px;box-shadow:0 2px 8px rgba(0,0,0,.3);"><img src="'+flagUrl+'" style="height:22px;display:block;border-radius:3px;"></div>'
+        : '<div style="font-size:1.8rem;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));">'+FLAG(nombre)+'</div>';
+    var icon = L.divIcon({ className:'', html:html, iconSize:[40,30], iconAnchor:[20,15] });
+    MAP_MARKER = L.marker(coords, {icon:icon}).addTo(MAP);
+
+    var popupHtml = '<div style="text-align:center;padding:4px;"><img src="'+flagUrl+'" style="height:28px;border-radius:3px;border:1px solid #ccc;margin-bottom:4px;display:block;margin-left:auto;margin-right:auto;"><strong>'+esc(nombre)+'</strong>';
+
+    if (USER_POS) {
+        var userIcon = L.divIcon({ className:'', html:'<div style="width:10px;height:10px;background:#2563eb;border:2px solid #fff;border-radius:50%;box-shadow:0 0 8px rgba(37,99,235,.6);"></div>', iconSize:[10,10], iconAnchor:[5,5] });
+        USER_MARKER = L.marker(USER_POS, {icon:userIcon}).addTo(MAP);
+        DIST_LINE = L.polyline([USER_POS, coords], {color:'#2563eb', weight:2, opacity:.7, dashArray:'6,6'}).addTo(MAP);
+        var km = HAVERSINE(USER_POS[0], USER_POS[1], coords[0], coords[1]);
+        popupHtml += '<div style="margin-top:6px;padding:4px 8px;background:#eff6ff;border:1px solid rgba(37,99,235,.25);border-radius:6px;font-size:.78rem;color:#2563eb;font-weight:600;"><i class="fas fa-route" style="margin-right:4px;"></i>' + Math.round(km).toLocaleString() + ' km desde tu ubicacion</div>';
+    }
+
+    popupHtml += '</div>';
+    MAP_MARKER.bindPopup(popupHtml, {closeButton:false}).openPopup();
+}
+
+function TOGGLE_MAP() {
+    var p = document.getElementById('mapPanel');
+    var m = document.getElementById('mapMini');
+    MAP_OPEN = !MAP_OPEN;
+    if (MAP_OPEN) {
+        p.style.width = '340px'; p.style.height = '260px'; p.style.borderRadius = '12px';
+        p.querySelector('.map-header').style.display = 'flex';
+        document.getElementById('worldMap').style.display = 'block';
+        document.getElementById('mResizeBR').style.display = 'block';
+        document.getElementById('mResizeTL').style.display = 'block';
+        document.getElementById('mResizeR').style.display = 'block';
+        document.getElementById('mResizeB').style.display = 'block';
+        m.style.display = 'none';
+        setTimeout(function(){ MAP.invalidateSize(); }, 350);
+    } else {
+        p.style.width = '50px'; p.style.height = '50px'; p.style.borderRadius = '50%';
+        p.querySelector('.map-header').style.display = 'none';
+        document.getElementById('worldMap').style.display = 'none';
+        document.getElementById('mResizeBR').style.display = 'none';
+        document.getElementById('mResizeTL').style.display = 'none';
+        document.getElementById('mResizeR').style.display = 'none';
+        document.getElementById('mResizeB').style.display = 'none';
+        m.style.display = 'none';
+    }
+}
+
+// ==================== RESIZE DEL MAPA ====================
+(function(){
+    var panel = document.getElementById('mapPanel');
+    var MIN_W = 180, MIN_H = 120, MAX_W = 900, MAX_H = 700;
+
+    function startResize(e, mode) {
+        e.preventDefault();
+        e.stopPropagation();
+        var startX = e.clientX, startY = e.clientY;
+        var startW = panel.offsetWidth, startH = panel.offsetHeight;
+        var startL = panel.offsetLeft, startT = panel.offsetTop;
+
+        function onMove(ev) {
+            var dx = ev.clientX - startX;
+            var dy = ev.clientY - startY;
+            var nw, nh, nl, nt;
+
+            if (mode === 'br') {
+                nw = Math.min(MAX_W, Math.max(MIN_W, startW + dx));
+                nh = Math.min(MAX_H, Math.max(MIN_H, startH + dy));
+            } else if (mode === 'tl') {
+                nw = Math.min(MAX_W, Math.max(MIN_W, startW - dx));
+                nh = Math.min(MAX_H, Math.max(MIN_H, startH - dy));
+                nl = startL + (startW - nw);
+                nt = startT + (startH - nh);
+                panel.style.left = nl + 'px';
+                panel.style.top = nt + 'px';
+                panel.style.right = 'auto';
+            } else if (mode === 'r') {
+                nw = Math.min(MAX_W, Math.max(MIN_W, startW + dx));
+                nh = startH;
+            } else if (mode === 'b') {
+                nw = startW;
+                nh = Math.min(MAX_H, Math.max(MIN_H, startH + dy));
+            }
+
+            panel.style.width = nw + 'px';
+            panel.style.height = nh + 'px';
+            MAP.invalidateSize();
+        }
+
+        function onUp() {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+
+        document.body.style.cursor = e.target.style.cursor || 'nwse-resize';
+        document.body.style.userSelect = 'none';
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    }
+
+    document.getElementById('mResizeBR').addEventListener('mousedown', function(e){ startResize(e, 'br'); });
+    document.getElementById('mResizeTL').addEventListener('mousedown', function(e){ startResize(e, 'tl'); });
+    document.getElementById('mResizeR').addEventListener('mousedown', function(e){ startResize(e, 'r'); });
+    document.getElementById('mResizeB').addEventListener('mousedown', function(e){ startResize(e, 'b'); });
+})();
+
+// ==================== PANEL PROPAGACION ====================
+var PROP_OPEN = true;
+
+function TOGGLE_PROP() {
+    var p = document.getElementById('propPanel');
+    var m = document.getElementById('propMini');
+    PROP_OPEN = !PROP_OPEN;
+    if (PROP_OPEN) {
+        p.style.width = '340px'; p.style.height = '260px'; p.style.borderRadius = '12px';
+        p.querySelector('.prop-header').style.display = 'flex';
+        document.getElementById('propFrame').style.display = 'block';
+        document.getElementById('pResizeBR').style.display = 'block';
+        document.getElementById('pResizeTR').style.display = 'block';
+        document.getElementById('pResizeL').style.display = 'block';
+        document.getElementById('pResizeB').style.display = 'block';
+        m.style.display = 'none';
+    } else {
+        p.style.width = '50px'; p.style.height = '50px'; p.style.borderRadius = '50%';
+        p.querySelector('.prop-header').style.display = 'none';
+        document.getElementById('propFrame').style.display = 'none';
+        document.getElementById('pResizeBR').style.display = 'none';
+        document.getElementById('pResizeTR').style.display = 'none';
+        document.getElementById('pResizeL').style.display = 'none';
+        document.getElementById('pResizeB').style.display = 'none';
+        m.style.display = 'none';
+    }
+}
+
+// ==================== RESIZE DEL PANEL DE PROPAGACION ====================
+(function(){
+    var panel = document.getElementById('propPanel');
+    var MIN_W = 180, MIN_H = 120, MAX_W = 900, MAX_H = 700;
+
+    function startResize(e, mode) {
+        e.preventDefault();
+        e.stopPropagation();
+        var startX = e.clientX, startY = e.clientY;
+        var startW = panel.offsetWidth, startH = panel.offsetHeight;
+        var startL = panel.offsetLeft, startT = panel.offsetTop;
+
+        function onMove(ev) {
+            var dx = ev.clientX - startX;
+            var dy = ev.clientY - startY;
+            var nw, nh;
+
+            if (mode === 'br') {
+                nw = Math.min(MAX_W, Math.max(MIN_W, startW + dx));
+                nh = Math.min(MAX_H, Math.max(MIN_H, startH + dy));
+            } else if (mode === 'tr') {
+                nw = Math.min(MAX_W, Math.max(MIN_W, startW + dx));
+                nh = Math.min(MAX_H, Math.max(MIN_H, startH - dy));
+                panel.style.top = (startT + (startH - nh)) + 'px';
+                panel.style.bottom = 'auto';
+            } else if (mode === 'l') {
+                nw = Math.min(MAX_W, Math.max(MIN_W, startW - dx));
+                nh = startH;
+                panel.style.left = (startL + (startW - nw)) + 'px';
+                panel.style.right = 'auto';
+            } else if (mode === 'b') {
+                nw = startW;
+                nh = Math.min(MAX_H, Math.max(MIN_H, startH + dy));
+            }
+
+            panel.style.width = nw + 'px';
+            panel.style.height = nh + 'px';
+        }
+
+        function onUp() {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+
+        document.body.style.cursor = e.target.style.cursor || 'nwse-resize';
+        document.body.style.userSelect = 'none';
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    }
+
+    document.getElementById('pResizeBR').addEventListener('mousedown', function(e){ startResize(e, 'br'); });
+    document.getElementById('pResizeTR').addEventListener('mousedown', function(e){ startResize(e, 'tr'); });
+    document.getElementById('pResizeL').addEventListener('mousedown', function(e){ startResize(e, 'l'); });
+    document.getElementById('pResizeB').addEventListener('mousedown', function(e){ startResize(e, 'b'); });
+})();
+
+
+// ==================== LIMPIAR FILTROS ====================
+function LIMPIAR() {
+    document.getElementById('FI').value = '';
+    document.getElementById('FP').value = '';
+    document.getElementById('FM').value = '';
+    document.getElementById('FD').value = '';
+    document.getElementById('FH').value = '';
+    CARGAR();
+}
+
+// ==================== ABRIR MODAL CREAR ====================
+function ABRIR() {
+    document.getElementById('cID').value = '';
+    document.getElementById('cInd').value = '';
+    document.getElementById('cNom').value = '';
+    document.getElementById('cPai').value = '';
+    document.getElementById('cHor').value = new Date().toISOString().slice(0,16);
+    document.getElementById('cFre').value = '';
+    document.getElementById('cMod').value = '';
+    document.getElementById('cSen').value = '';
+    document.getElementById('cObs').value = '';
+    document.getElementById('MTITULO').innerHTML = '<i class="fas fa-plus-circle" style="color:var(--ok);margin-right:8px;"></i>Nuevo Contacto';
+    new bootstrap.Modal(document.getElementById('FMODAL')).show();
+}
+
+// ==================== EDITAR ====================
+function EDITAR(id) {
+    fetch(API + '?action=get&id=' + id)
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d.error) { T(d.error,'er'); return; }
+        document.getElementById('cID').value = d.id;
+        document.getElementById('cInd').value = d.indicativo;
+        document.getElementById('cNom').value = d.nombre;
+        document.getElementById('cPai').value = d.pais;
+        document.getElementById('cHor').value = d.hora_utc ? d.hora_utc.replace(' ','T').substring(0,16) : '';
+        document.getElementById('cFre').value = d.frecuencia;
+        document.getElementById('cMod').value = d.modalidad;
+        document.getElementById('cSen').value = d.senal;
+        document.getElementById('cObs').value = d.observacion;
+        document.getElementById('MTITULO').innerHTML = '<i class="fas fa-pen" style="color:var(--warn);margin-right:8px;"></i>Modificar Contacto';
+        bootstrap.Modal.getInstance(document.getElementById('DDETAIL'))?.hide();
+        new bootstrap.Modal(document.getElementById('FMODAL')).show();
+    })
+    .catch(function(e){ console.error(e); });
+}
+
+// ==================== VER DETALLE ====================
+function VER(id) {
+    fetch(API + '?action=get&id=' + id)
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d.error) { T(d.error,'er'); return; }
+        var fe = d.hora_utc ? d.hora_utc.replace('T',' ') : '-';
+        var fl = FLAG(d.pais);
+        var h = '<div class="detail-row"><span class="detail-label">Indicativo</span><span class="detail-val" style="font-family:Share Tech Mono,monospace;font-weight:700;color:var(--ok);font-size:1rem;">' + esc(d.indicativo) + '</span></div>' +
+            '<div class="detail-row"><span class="detail-label">Nombre</span><span class="detail-val">' + esc(d.nombre||'-') + '</span></div>' +
+            '<div class="detail-row"><span class="detail-label">Pais</span><span class="detail-val"><span class="flag-badge"><span class="flag-emoji">' + fl + '</span><span class="flag-name">' + esc(d.pais||'-') + '</span></span></span></div>' +
+            '<div class="detail-row"><span class="detail-label">Hora UTC</span><span class="detail-val" style="font-family:Share Tech Mono,monospace;">' + fe + '</span></div>' +
+            '<div class="detail-row"><span class="detail-label">Frecuencia</span><span class="detail-val" style="font-family:Share Tech Mono,monospace;">' + esc(d.frecuencia) + ' MHz</span></div>' +
+            '<div class="detail-row"><span class="detail-label">Modalidad</span><span class="detail-val"><span class="ctag">' + esc(d.modalidad) + '</span></span></div>' +
+            '<div class="detail-row"><span class="detail-label">Senal</span><span class="detail-val">' + esc(d.senal||'-') + '</span></div>' +
+            '<div class="detail-row"><span class="detail-label">Observacion</span><span class="detail-val" style="white-space:pre-wrap;">' + esc(d.observacion||'-') + '</span></div>' +
+            '<div class="detail-row"><span class="detail-label">Creado</span><span class="detail-val" style="font-size:.78rem;color:var(--muted);">' + (d.created||'-') + '</span></div>';
+        document.getElementById('DBODY').innerHTML = h;
+        document.getElementById('DBTN_EDIT').onclick = function(){ EDITAR(d.id); };
+        MAPA_PAIS(d.pais);
+        new bootstrap.Modal(document.getElementById('DDETAIL')).show();
+    })
+    .catch(function(e){ console.error(e); });
+}
+
+// ==================== FORMULARIO GUARDAR ====================
+document.getElementById('CFORM').addEventListener('submit', function(ev) {
+    ev.preventDefault();
+    var id = document.getElementById('cID').value;
+    var data = {
+        indicativo: document.getElementById('cInd').value.trim(),
+        nombre: document.getElementById('cNom').value.trim(),
+        pais: document.getElementById('cPai').value.trim(),
+        hora_utc: document.getElementById('cHor').value.replace('T',' ') + ':00',
+        frecuencia: document.getElementById('cFre').value.trim(),
+        modalidad: document.getElementById('cMod').value,
+        senal: document.getElementById('cSen').value.trim(),
+        observacion: document.getElementById('cObs').value.trim()
+    };
+
+    var url, act;
+    if (id) {
+        data.id = parseInt(id);
+        url = API + '?action=update';
+    } else {
+        url = API + '?action=create';
+    }
+
+    fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d.error) { T(d.error,'er'); return; }
+        T(d.msg,'ok');
+        bootstrap.Modal.getInstance(document.getElementById('FMODAL')).hide();
+        CARGAR();
+    })
+    .catch(function(){ T('Error al guardar','er'); });
+});
+
+// ==================== ELIMINAR ====================
+var DEL_ID = 0;
+function CONFIR(id, nombre) {
+    DEL_ID = id;
+    document.getElementById('DEL_NAME').textContent = nombre;
+    new bootstrap.Modal(document.getElementById('DCONFIRM')).show();
+}
+
+document.getElementById('DBTN_DEL').addEventListener('click', function() {
+    if (!DEL_ID) return;
+    fetch(API + '?action=delete', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({id: DEL_ID})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d.error) { T(d.error,'er'); return; }
+        T(d.msg,'ok');
+        bootstrap.Modal.getInstance(document.getElementById('DCONFIRM')).hide();
+        CARGAR();
+    })
+    .catch(function(){ T('Error al eliminar','er'); });
+});
+
+// ==================== EXPORTAR CSV ====================
+function EXP_CSV() {
+    if (!ALL.length) { T('No hay contactos para exportar','er'); return; }
+    window.location.href = API + '?action=export_csv';
+    T('CSV descargado','ok');
+}
+
+// ==================== IMPRIMIR ====================
+function IMPRI() {
+    if (!ALL.length) { T('No hay contactos para imprimir','er'); return; }
+    document.getElementById('PDATE').textContent = new Date().toISOString().slice(0,19).replace('T',' ');
+    document.getElementById('PTOTAL').textContent = ALL.length;
+    var h = '';
+    ALL.forEach(function(c, i) {
+        var fe = c.hora_utc ? c.hora_utc.replace('T',' ').substring(0,16) : '-';
+        var iso = FLAG_ISO[(c.pais||'').toUpperCase().trim()];
+        var flImg = iso ? '<img src="https://flagcdn.com/w40/'+iso+'.png" style="height:12px;vertical-align:middle;border-radius:2px;border:1px solid #ccc;margin-right:3px;">' : '';
+        h += '<tr><td>'+(i+1)+'</td><td><strong>'+esc(c.indicativo)+'</strong></td><td>'+esc(c.nombre||'-')+'</td><td>'+flImg+esc(c.pais||'-')+'</td><td>'+fe+'</td><td>'+esc(c.frecuencia)+'</td><td>'+esc(c.modalidad)+'</td><td>'+esc(c.senal||'-')+'</td><td>'+esc(c.observacion||'-')+'</td></tr>';
+    });
+    document.getElementById('PTB').innerHTML = h;
+    window.print();
+}
+
+// ==================== CALCULADORA DE CABLES ====================
+var CABLES_CB = {
+    rg58:{n:'RG-58',z:'50Ω',d:'4.95mm',a:{1.8:0.65,3.5:0.95,7:1.35,14:1.95,21:2.50,28:3.10,50:4.30,144:8.50,430:16.50,1240:33}},
+    rg8x:{n:'RG-8X',z:'50Ω',d:'6.35mm',a:{1.8:0.40,3.5:0.60,7:0.90,14:1.30,21:1.65,28:2.00,50:2.80,144:5.80,430:11.50,1240:23}},
+    rg213:{n:'RG-213',z:'50Ω',d:'10.3mm',a:{1.8:0.22,3.5:0.32,7:0.48,14:0.72,21:0.92,28:1.10,50:1.55,144:3.20,430:6.50,1240:14}},
+    rg6:{n:'RG-6',z:'75Ω',d:'6.90mm',a:{1.8:0.35,3.5:0.52,7:0.78,14:1.15,21:1.45,28:1.75,50:2.50,144:5.20,430:10.50,1240:21}},
+    rg59:{n:'RG-59',z:'75Ω',d:'6.15mm',a:{1.8:0.70,3.5:1.00,7:1.50,14:2.20,21:2.80,28:3.40,50:4.80,144:9.50,430:19,1240:38}},
+    rg11:{n:'RG-11',z:'75Ω',d:'10.3mm',a:{1.8:0.25,3.5:0.37,7:0.55,14:0.82,21:1.05,28:1.25,50:1.80,144:3.70,430:7.50,1240:16}},
+    lmr400:{n:'LMR-400',z:'50Ω',d:'10.3mm',a:{1.8:0.07,3.5:0.10,7:0.15,14:0.22,21:0.27,28:0.33,50:0.45,144:0.90,430:1.75,1240:3.60}},
+    lmr600:{n:'LMR-600',z:'50Ω',d:'15.2mm',a:{1.8:0.045,3.5:0.065,7:0.10,14:0.14,21:0.18,28:0.22,50:0.30,144:0.62,430:1.20,1240:2.60}},
+    heliax_h:{n:'Heliax 1/2"',z:'50Ω',d:'12.7mm',a:{1.8:0.030,3.5:0.040,7:0.060,14:0.090,21:0.110,28:0.140,50:0.190,144:0.42,430:0.82,1240:1.80}},
+    heliax_78:{n:'Heliax 7/8"',z:'50Ω',d:'22.2mm',a:{1.8:0.020,3.5:0.025,7:0.040,14:0.055,21:0.070,28:0.085,50:0.120,144:0.27,430:0.55,1240:1.20}}
+};
+var BANDS_CB = [
+    {n:'160m',f:1.83},{n:'80m',f:3.65},{n:'40m',f:7.1},{n:'30m',f:10.1},{n:'20m',f:14.15},
+    {n:'17m',f:18.12},{n:'15m',f:21.2},{n:'12m',f:24.94},{n:'10m',f:28.5},{n:'6m',f:50.1},
+    {n:'2m',f:145},{n:'70cm',f:432},{n:'23cm',f:1240},{n:'Custom',f:null}
+];
+
+function INIT_CABLE_CALC() {
+    var cs = document.getElementById('cbType');
+    var bs = document.getElementById('cbBand');
+    Object.keys(CABLES_CB).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=CABLES_CB[k].n+' ('+CABLES_CB[k].z+')';cs.appendChild(o);});
+    BANDS_CB.forEach(function(b){var o=document.createElement('option');o.value=b.n;o.textContent=b.n+(b.f?' — '+b.f+' MHz':'');bs.appendChild(o);});
+    bs.addEventListener('change',function(){
+        var s=BANDS_CB.find(function(b){return b.n===bs.value;});
+        document.getElementById('cbFreqWrap').style.display=(s&&s.f===null)?'block':'none';
+    });
+    ['cbLen','cbPow','cbFreq'].forEach(function(id){
+        document.getElementById(id).addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();CALC_CABLE();}});
+    });
+}
+
+function CB_ATT(cable, freq) {
+    var fs = Object.keys(cable.a).map(Number).sort(function(a,b){return a-b;});
+    if (cable.a[freq] !== undefined) return cable.a[freq];
+    if (freq <= fs[0]) return cable.a[fs[0]] * Math.sqrt(Math.max(0.01,freq)/fs[0]);
+    if (freq >= fs[fs.length-1]) return cable.a[fs[fs.length-1]] * Math.sqrt(freq/fs[fs.length-1]);
+    for (var i=0;i<fs.length-1;i++) {
+        if (freq >= fs[i] && freq <= fs[i+1]) {
+            var t = (Math.log(freq)-Math.log(fs[i]))/(Math.log(fs[i+1])-Math.log(fs[i]));
+            return cable.a[fs[i]] + t*(cable.a[fs[i+1]]-cable.a[fs[i]]);
+        }
+    }
+    return 0;
+}
+
+function CALC_CABLE() {
+    var ck = document.getElementById('cbType').value;
+    var bs = document.getElementById('cbBand');
+    var s = BANDS_CB.find(function(b){return b.n===bs.value;});
+    var freq = (s && s.f !== null) ? s.f : (parseFloat(document.getElementById('cbFreq').value)||146);
+    var len = Math.max(0.1, parseFloat(document.getElementById('cbLen').value)||20);
+    var pow = Math.max(0.01, parseFloat(document.getElementById('cbPow').value)||100);
+
+    var cable = CABLES_CB[ck];
+    var att = CB_ATT(cable, freq);
+    var loss = att * (len/100);
+    var factor = Math.pow(10, -loss/10);
+    var pAnt = pow * factor;
+    var pct = (1 - factor) * 100;
+
+    document.getElementById('cbResults').style.display = 'block';
+    document.getElementById('cbAtt').textContent = att.toFixed(3) + ' dB/100m';
+    document.getElementById('cbLoss').textContent = loss.toFixed(2) + ' dB';
+    document.getElementById('cbPW').textContent = (pAnt >= 1 ? pAnt.toFixed(1) : pAnt.toFixed(3)) + ' W';
+    document.getElementById('cbPct').textContent = pct.toFixed(1) + '%';
+
+    var cls = loss <= 0.5 ? 'g' : loss <= 1.5 ? 'g' : loss <= 3 ? 'a' : loss <= 6 ? 'a' : 'r';
+    var txt = loss <= 0.5 ? 'Excelente' : loss <= 1.5 ? 'Bueno' : loss <= 3 ? 'Aceptable' : loss <= 6 ? 'Alto' : 'Critico';
+    var dots = ['cbDot1','cbDot2','cbDot3','cbDot4'];
+    var nIdx = loss > 6 ? 3 : loss > 3 ? 2 : loss > 0.5 ? 1 : 0;
+    dots.forEach(function(id,i){ document.getElementById(id).className='cable-sem-dot '+(i<=nIdx?cls:'off'); });
+    document.getElementById('cbSemText').textContent = txt;
+
+    document.getElementById('cbAtt').className = 'cable-result-val' + (loss > 3 ? ' bad' : '');
+    document.getElementById('cbLoss').className = 'cable-result-val' + (loss > 6 ? ' crit' : loss > 3 ? ' bad' : '');
+    document.getElementById('cbPct').className = 'cable-result-val' + (pct > 50 ? ' crit' : pct > 25 ? ' bad' : '');
+}
+
+var CABLE_OPEN = false;
+function TOGGLE_CABLE() {
+    var p = document.getElementById('cablePanel');
+    var btn = document.getElementById('btnCableToggle');
+    CABLE_OPEN = !CABLE_OPEN;
+    if (CABLE_OPEN) {
+        var r = btn.getBoundingClientRect();
+        p.style.right = (window.innerWidth - r.right) + 'px';
+        p.style.left = 'auto';
+        p.classList.add('show');
+        btn.style.background='linear-gradient(135deg,rgba(5,150,105,.18),rgba(5,150,105,.28))';
+        btn.style.borderColor='rgba(5,150,105,.5)';
+    } else {
+        p.classList.remove('show');
+        btn.style.background='linear-gradient(135deg,rgba(5,150,105,.08),rgba(5,150,105,.15))';
+        btn.style.borderColor='rgba(5,150,105,.3)';
+    }
+}
+document.addEventListener('click', function(e) {
+    if (!CABLE_OPEN) return;
+    var p = document.getElementById('cablePanel');
+    var btn = document.getElementById('btnCableToggle');
+    if (!p.contains(e.target) && !btn.contains(e.target)) {
+        CABLE_OPEN = false;
+        p.classList.remove('show');
+        btn.style.background='linear-gradient(135deg,rgba(5,150,105,.08),rgba(5,150,105,.15))';
+        btn.style.borderColor='rgba(5,150,105,.3)';
+    }
+});
+
+// ==================== CARGAR AL INICIO ====================
+CARGAR();
+INIT_MAP();
+INIT_CABLE_CALC();
+
+// ==================== RELOJ UTC ====================
+var UTC_BLINK = true;
+function UTC_CLOCK() {
+    var n = new Date();
+    var h = String(n.getUTCHours()).padStart(2,'0');
+    var m = String(n.getUTCMinutes()).padStart(2,'0');
+    var s = String(n.getUTCSeconds()).padStart(2,'0');
+    UTC_BLINK = !UTC_BLINK;
+    var sep = UTC_BLINK ? ':' : ' ';
+    document.getElementById('utcTime').textContent = h + sep + m + sep + s;
+}
+UTC_CLOCK();
+setInterval(UTC_CLOCK, 1000);
+</script>
+</body>
+</html>
