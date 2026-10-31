@@ -208,7 +208,7 @@ body.rz-dragging .rz:hover{background:rgba(59,130,246,.35)}
 
         <div class="layer-card" id="lcRadarMode" onclick="toggleRadarMode()">
             <div class="icon" style="background:rgba(16,185,129,.15);color:var(--ok);"><i class="fas fa-satellite-dish"></i></div>
-            <div class="info"><div class="name">Modo Radar</div><div class="desc">Vista tipo radar de avion con nubes</div></div>
+            <div class="info"><div class="name">Modo Radar</div><div class="desc">Vista tipo radar de avion</div></div>
             <div class="toggle"></div>
         </div>
 
@@ -534,15 +534,6 @@ function toggleLayer(name) {
 
     if (name === 'radar') {
         if (LAYERS.radar) {
-            if (!LAYERS.clouds) {
-                LAYERS.clouds = true;
-                var cloudCard = document.getElementById('lcClouds');
-                if (cloudCard) {
-                    cloudCard.classList.add('active');
-                    cloudCard.setAttribute('aria-pressed', 'true');
-                }
-                loadCloudLayer();
-            }
             showRadar();
         } else {
             hideRadar();
@@ -663,6 +654,8 @@ var CloudCanvasLayer = L.GridLayer.extend({
         tile.width = 256;
         tile.height = 256;
         var ctx = tile.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
 
         var nativeZoom = Math.min(coords.z, 6);
         var factor = Math.pow(2, coords.z - nativeZoom);
@@ -683,8 +676,14 @@ var CloudCanvasLayer = L.GridLayer.extend({
         img.crossOrigin = 'anonymous';
         img.onload = function () {
             try {
-                ctx.drawImage(img, sx, sy, srcSize, srcSize, 0, 0, 256, 256);
-                var imageData = ctx.getImageData(0, 0, 256, 256);
+                var work = document.createElement('canvas');
+                work.width = 256;
+                work.height = 256;
+                var wctx = work.getContext('2d');
+                wctx.imageSmoothingEnabled = true;
+                wctx.imageSmoothingQuality = 'high';
+                wctx.drawImage(img, sx, sy, srcSize, srcSize, 0, 0, 256, 256);
+                var imageData = wctx.getImageData(0, 0, 256, 256);
                 var px = imageData.data;
                 var pal = cloudPalette();
                 var cache = {};
@@ -700,19 +699,24 @@ var CloudCanvasLayer = L.GridLayer.extend({
                         px[i + 3] = 0;
                         continue;
                     }
-                    px[i] = 255;
-                    px[i + 1] = 255;
-                    px[i + 2] = 255;
-                    px[i + 3] = Math.round(235 * Math.pow(frac / 100, 0.85));
+                    var t = frac / 100;
+                    var edge = Math.pow(t, 0.55);
+                    px[i] = Math.round(205 + 50 * edge);
+                    px[i + 1] = Math.round(218 + 37 * edge);
+                    px[i + 2] = Math.round(235 + 20 * edge);
+                    px[i + 3] = Math.round(255 * Math.pow(t, 0.45));
                 }
-                ctx.putImageData(imageData, 0, 0);
+                wctx.putImageData(imageData, 0, 0);
+                ctx.filter = 'blur(0.4px)';
+                ctx.drawImage(work, 0, 0);
+                ctx.filter = 'none';
             } catch (e) {}
             finish();
         };
+        var retryDays = [2, 3, 4];
         img.onerror = function () {
-            if (!img._retried) {
-                img._retried = true;
-                img.src = cloudTileUrl(gibsDate(2), nativeZoom, cy, cx);
+            if (retryDays.length) {
+                img.src = cloudTileUrl(gibsDate(retryDays.shift()), nativeZoom, cy, cx);
                 return;
             }
             finish();
@@ -725,7 +729,7 @@ var CloudCanvasLayer = L.GridLayer.extend({
 function loadCloudLayer() {
     if (OVERLAY_LAYERS.clouds) { MAP.removeLayer(OVERLAY_LAYERS.clouds); OVERLAY_LAYERS.clouds = null; }
     OVERLAY_LAYERS.clouds = new CloudCanvasLayer({
-        opacity: RADAR_MODE ? 0.95 : 0.85,
+        opacity: 1,
         zIndex: 250,
         maxZoom: 18,
         className: 'cloud-canvas',
@@ -749,9 +753,8 @@ function toggleRadarMode() {
         RADAR_OPACITY = 0.85;
         toggleBase('dark');
         if (!LAYERS.radar) toggleLayer('radar');
-        if (!LAYERS.clouds) toggleLayer('clouds');
+        if (LAYERS.clouds) toggleLayer('clouds');
         if (OVERLAY_LAYERS.radar) OVERLAY_LAYERS.radar.setOpacity(RADAR_OPACITY);
-        if (OVERLAY_LAYERS.clouds) OVERLAY_LAYERS.clouds.setOpacity(0.8);
     } else {
         RADAR_OPACITY = 0.7;
         if (RADAR_MODE_PREV) {
@@ -762,7 +765,6 @@ function toggleRadarMode() {
             });
         }
         if (OVERLAY_LAYERS.radar) OVERLAY_LAYERS.radar.setOpacity(RADAR_OPACITY);
-        if (OVERLAY_LAYERS.clouds) OVERLAY_LAYERS.clouds.setOpacity(0.6);
     }
     updateLegend();
 }
